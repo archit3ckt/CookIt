@@ -211,4 +211,43 @@ export const TECHNIQUES: TechniqueTemplate[] = [
       'Pour into the pan and bake until a toothpick comes out clean, 25-35 min. Cool before removing from the pan.',
     ],
   },
+  {
+    id: 'meringue',
+    name: 'Meringue',
+    requiredRoles: ['egg-white', 'sweetener'],
+    optionalRoles: ['acid', 'spice'],
+    baseMinutes: 100,
+    minutesPerExtraIngredient: 2,
+    difficulty: 2,
+    healthModifier: 0.7,
+    // Uses only the white half of an egg — buildRecipeForTechnique flags the leftover
+    // yolks and, when a yolk-using recipe like custard is also generated, pairs the two.
+    steps: (ctx) => [
+      'Preheat oven to 200°F (95°C) and line a sheet pan with parchment.',
+      `Whip ${ctx.eggWhite ?? 'egg whites'} to soft peaks in a completely clean, grease-free bowl.`,
+      ctx.acid
+        ? `Add ${ctx.acid} for stability, then whip in 100g ${ctx.sweetener ?? 'sugar'} a spoonful at a time until stiff, glossy peaks form.`
+        : `Whip in 100g ${ctx.sweetener ?? 'sugar'} a spoonful at a time until stiff, glossy peaks form.`,
+      `Fold in ${ctx.spices.join(', ') || 'flavoring'} if using.`,
+      'Pipe or spoon onto the sheet pan and bake low and slow until crisp and dry, 1.5-2 hours. Cool completely before removing.',
+    ],
+  },
+  {
+    id: 'custard',
+    name: 'Custard',
+    requiredRoles: ['egg-yolk', 'dairy', 'sweetener'],
+    optionalRoles: ['spice'],
+    baseMinutes: 30,
+    minutesPerExtraIngredient: 2,
+    difficulty: 2,
+    healthModifier: 0.55,
+    // Uses only the yolk half of an egg — the natural companion to a whites-only meringue.
+    steps: (ctx) => [
+      `Warm ${ctx.dairy ?? 'milk'} in a saucepan until just steaming, don't boil.`,
+      `Whisk ${ctx.eggYolk ?? 'egg yolks'} with 80g ${ctx.sweetener ?? 'sugar'} until pale.`,
+      `Slowly pour the warm ${ctx.dairy ?? 'milk'} into the yolks while whisking constantly, to temper them.`,
+      `Return to low heat and stir until it coats the back of a spoon — do not let it boil or the eggs will curdle.`,
+      `Strain, stir in ${ctx.spices.join(', ') || 'vanilla'}, and chill before serving.`,
+    ],
+  },
 ];

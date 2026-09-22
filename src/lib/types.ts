@@ -12,7 +12,10 @@ export type IngredientRole =
   | 'flour'
   | 'leavening'
   /** Eggs specifically, distinct from the generic 'protein' role — baking needs eggs, not just any protein. */
-  | 'egg';
+  | 'egg'
+  /** Separated egg white/yolk — distinct from 'egg' since whole eggs aren't a substitute in a meringue or custard. */
+  | 'egg-white'
+  | 'egg-yolk';
 
 /** Macronutrients per 100g of the ingredient as typically eaten (cooked meat/veg, dried spices as sold, etc). */
 export interface Macros {
@@ -64,7 +67,9 @@ export type Technique =
   | 'poach'
   | 'deep-fry'
   | 'blend'
-  | 'cake';
+  | 'cake'
+  | 'meringue'
+  | 'custard';
 
 export interface TechniqueTemplate {
   id: Technique;
@@ -94,6 +99,8 @@ export interface TechniqueContext {
   flour?: string;
   leavening?: string;
   egg?: string;
+  eggWhite?: string;
+  eggYolk?: string;
 }
 
 export interface GeneratedRecipe {
@@ -112,6 +119,10 @@ export interface GeneratedRecipe {
   healthScore: number;
   /** Average per-100g macros across the chosen ingredients — a relative comparison figure, not a true per-serving total. */
   macros: Macros;
+  /** Id of a companion recipe that uses the leftover half of a split ingredient this one only partially uses (e.g. egg yolks left over from a whites-only meringue). */
+  pairedRecipeId?: string;
+  /** Human-readable reason for the pairing, e.g. "uses the leftover egg yolks." */
+  pairedRecipeNote?: string;
 }
 
 export type RecipeSort = 'waste' | 'time' | 'ease' | 'health' | 'protein';

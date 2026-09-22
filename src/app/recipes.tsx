@@ -90,6 +90,7 @@ export default function RecipesScreen() {
               {item.estimatedMinutes} min · {'★'.repeat(item.difficulty)} · {healthLabel(item.healthScore)}
               {item.wasteScore > 0.5 ? ' · uses items expiring soon' : ''}
             </Text>
+            {item.pairedRecipeNote && <Text style={styles.cardPairing}>🥚 {item.pairedRecipeNote}</Text>}
           </Pressable>
         )}
       />
@@ -108,5 +109,6 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#fafafa', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#eee', gap: 4 },
   cardTitle: { fontSize: 16, fontWeight: '600' },
   cardMeta: { fontSize: 13, color: '#666' },
+  cardPairing: { fontSize: 12, color: '#8a6d00', marginTop: 2 },
   empty: { textAlign: 'center', color: '#888', marginTop: 40, paddingHorizontal: 20 },
 });

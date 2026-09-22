@@ -1,4 +1,5 @@
 import { GeneratedRecipe, IngredientDef, IngredientRole, Macros, PantryItem, TechniqueContext, TechniqueTemplate } from '../types';
+import { deriveVirtualPantryItems, pairByproductRecipes } from './byproducts';
 import { INGREDIENTS_BY_ID } from './ingredients';
 import { TECHNIQUES } from './techniques';
 
@@ -193,6 +194,8 @@ function buildRecipeForTechnique(
     flour: byRole('flour')[0]?.def.name,
     leavening: byRole('leavening')[0]?.def.name,
     egg: byRole('egg')[0]?.def.name,
+    eggWhite: byRole('egg-white')[0]?.def.name,
+    eggYolk: byRole('egg-yolk')[0]?.def.name,
   };
 
   const defs = chosen.map((c) => c.def);
@@ -227,7 +230,10 @@ function buildRecipeForTechnique(
  * up. Runs entirely on-device.
  */
 export function generateRecipes(pantryItems: PantryItem[]): GeneratedRecipe[] {
-  const pantry: PantryIngredient[] = pantryItems
+  // Virtual entries let whites/yolks-only techniques draw on whole eggs already in the
+  // pantry, without the user having to separately log "egg whites" as their own item.
+  const withVirtualItems = [...pantryItems, ...deriveVirtualPantryItems(pantryItems)];
+  const pantry: PantryIngredient[] = withVirtualItems
     .map((item) => {
       const def = INGREDIENTS_BY_ID[item.ingredientId];
       if (!def) return null;
@@ -250,5 +256,11 @@ export function generateRecipes(pantryItems: PantryItem[]): GeneratedRecipe[] {
     const existing = byKey.get(r.id);
     if (!existing || r.balanceScore > existing.balanceScore) byKey.set(r.id, r);
   }
-  return Array.from(byKey.values());
+  const deduped = Array.from(byKey.values());
+
+  // Suggest pairing recipes that use opposite halves of a split ingredient (e.g. a
+  // whites-only meringue paired with a yolks-only custard) so neither half goes to waste.
+  pairByproductRecipes(deduped, pantryItems);
+
+  return deduped;
 }

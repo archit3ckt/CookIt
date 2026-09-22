@@ -47,6 +47,8 @@ const INGREDIENT_ID_LIST = [
   'peanuts', 'almonds', 'cashews', 'walnuts', 'sesame-seeds', 'pine-nuts',
   // Baking
   'flour', 'baking-powder', 'baking-soda', 'vanilla-extract',
+  // Egg components (byproducts of separating whole eggs)
+  'egg-white', 'egg-yolk',
 ] as const;
 
 type SeedId = (typeof INGREDIENT_ID_LIST)[number];
@@ -218,6 +220,15 @@ const SEED: Record<SeedId, SeedEntry> = {
   'baking-powder': { name: 'Baking powder', roles: ['leavening'], pairsWith: ['flour'], defaultShelfLifeDays: 365, healthScore: 0.5, macros: m(53, 0, 28, 0, 10600) },
   'baking-soda': { name: 'Baking soda', roles: ['leavening'], pairsWith: ['flour', 'lemon', 'vinegar'], defaultShelfLifeDays: 730, healthScore: 0.5, macros: m(0, 0, 0, 0, 27360) },
   'vanilla-extract': { name: 'Vanilla extract', roles: ['spice'], pairsWith: ['sugar', 'flour', 'butter', 'eggs'], defaultShelfLifeDays: 1095, healthScore: 0.6, macros: m(288, 0.1, 13, 0.1, 9) },
+
+  // ---- Egg components ----
+  // Roles are deliberately narrow (just 'egg-white'/'egg-yolk', not also 'protein'/'fat'):
+  // giving them the generic role too would let them get swept into unrelated savory
+  // techniques (a "grilled egg white") since those only need *a* protein/fat, and would
+  // corrupt the byproduct-pairing logic by making a nonsense recipe look like the best
+  // companion for a whites-only or yolks-only one.
+  'egg-white': { name: 'Egg white', roles: ['egg-white'], pairsWith: ['sugar', 'lemon', 'vanilla-extract'], defaultShelfLifeDays: 4, healthScore: 0.85, macros: m(52, 10.9, 0.7, 0.2, 166) },
+  'egg-yolk': { name: 'Egg yolk', roles: ['egg-yolk'], pairsWith: ['sugar', 'milk', 'cream', 'vanilla-extract'], defaultShelfLifeDays: 2, healthScore: 0.55, macros: m(322, 15.9, 3.6, 27, 48) },
 };
 
 export const INGREDIENTS: IngredientDef[] = INGREDIENT_ID_LIST.map((id) => ({ id, ...SEED[id] }));

@@ -33,7 +33,17 @@ minimize food waste by prioritizing ingredients close to expiry.
    quantities to what's in the pantry like savory techniques do; it outputs
    a fixed baker's-percentage batch (~250g flour) using whichever pantry
    ingredient fills each role.
-3. **Ranking** — sort suggestions by waste reduction (uses what's expiring
+3. **Byproduct pairing** (`src/lib/rulesEngine/byproducts.ts`) — some
+   recipes only use half of an ingredient (a meringue wants egg whites,
+   a custard wants yolks). Given whole eggs in the pantry, the generator
+   synthesizes "you could separate this" virtual entries so both
+   whites-only and yolks-only techniques can be generated in the first
+   place, then cross-links whichever meringue/custard pair actually got
+   generated so using one flags "pairs with the other, so the leftover
+   half isn't wasted." Written as a generic source→component-A/component-B
+   registry, not eggs-specific, so a future split (citrus zest vs. juice,
+   etc.) is just another registry entry.
+4. **Ranking** — sort suggestions by waste reduction (uses what's expiring
    soonest), time, ease, health, or protein content; filter by max cook time
    or minimum health score.
 
@@ -63,7 +73,7 @@ src/
   lib/
     types.ts           # Domain types
     db/                # SQLite schema + pantry CRUD + usePantry hook
-    rulesEngine/        # ingredients.ts, techniques.ts, generate.ts, rank.ts
+    rulesEngine/        # ingredients.ts, techniques.ts, generate.ts, rank.ts, byproducts.ts
     barcode.ts          # Open Food Facts lookup
     ocr.ts               # Google Cloud Vision text extraction
     receipt.ts           # OCR text -> candidate pantry items
