@@ -1,4 +1,5 @@
 import { TechniqueTemplate } from '../types';
+import { oilAdjustmentNote } from './cookingNotes';
 
 export const TECHNIQUES: TechniqueTemplate[] = [
   {
@@ -12,8 +13,8 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     healthModifier: 0.95,
     steps: (ctx) => [
       `Season ${ctx.protein ?? 'your protein'} and pat dry.`,
-      `Heat ${ctx.fat ?? 'oil'} in a pan over medium-high heat.`,
-      `Sear the ${ctx.protein ?? 'protein'} until browned, then set aside.`,
+      `Heat ${ctx.fat ?? 'oil'} in a pan over medium-high heat${oilAdjustmentNote(ctx.proteinFatG)}.`,
+      `Sear the ${ctx.protein ?? 'protein'} until browned, then set aside — leave it uncovered, a lid traps steam and stops browning.`,
       `In the same pan, sauté ${ctx.aromatics.join(', ') || 'aromatics'} until fragrant.`,
       ctx.acid ? `Deglaze with ${ctx.acid} to build a pan sauce.` : 'Add a splash of water or stock to lift the fond.',
       `Return the ${ctx.protein ?? 'protein'} to the pan, toss with the sauce, and finish with ${ctx.spices.join(', ') || 'seasoning'}.`,
@@ -30,9 +31,9 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     healthModifier: 1.0,
     steps: (ctx) => [
       'Preheat oven to 425°F (220°C).',
-      `Toss ${ctx.protein ?? 'protein'} and ${ctx.vegetables.join(', ') || 'vegetables'} with ${ctx.fat ?? 'oil'} and ${ctx.spices.join(', ') || 'seasoning'}.`,
-      'Spread in a single layer on a sheet pan.',
-      'Roast until the protein is cooked through and vegetables are caramelized, 25-35 min.',
+      `Toss ${ctx.protein ?? 'protein'} and ${ctx.vegetables.join(', ') || 'vegetables'} with ${ctx.fat ?? 'oil'}${oilAdjustmentNote(ctx.proteinFatG)} and ${ctx.spices.join(', ') || 'seasoning'}.`,
+      'Spread in a single layer on a sheet pan — crowding steams instead of roasts.',
+      'Roast uncovered until the protein is cooked through and vegetables are caramelized, 25-35 min.',
     ],
   },
   {
@@ -45,10 +46,11 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     difficulty: 2,
     healthModifier: 0.95,
     steps: (ctx) => [
-      `Sear ${ctx.protein ?? 'protein'} on all sides, then remove.`,
+      `Add a little oil to the pot${oilAdjustmentNote(ctx.proteinFatG)}, then sear ${ctx.protein ?? 'protein'} on all sides and remove.`,
       `Sauté ${ctx.aromatics.join(', ') || 'aromatics'} in the same pot.`,
       `Return protein, add enough liquid to come halfway up, plus ${ctx.acid ?? 'an acid'} for brightness.`,
-      'Cover and simmer low until fork-tender.',
+      'Cover with a lid and simmer low until fork-tender — the lid traps moisture so the liquid doesn\'t reduce away before the meat is done.',
+      'If the sauce is thin once it\'s tender, uncover for the last 10-15 min to reduce and concentrate it.',
     ],
   },
   {
@@ -62,9 +64,9 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     healthModifier: 0.95,
     steps: (ctx) => [
       'Have all ingredients prepped before you start — this moves fast.',
-      `Sear ${ctx.protein ?? 'protein'} in a very hot wok/pan, then remove.`,
+      `Sear ${ctx.protein ?? 'protein'} in a very hot wok/pan with a thin film of oil${oilAdjustmentNote(ctx.proteinFatG)}, then remove.`,
       `Stir-fry ${ctx.aromatics.join(', ') || 'aromatics'} for 30 seconds.`,
-      `Add ${ctx.vegetables.join(', ') || 'vegetables'} and stir-fry until crisp-tender.`,
+      `Add ${ctx.vegetables.join(', ') || 'vegetables'} and stir-fry uncovered until crisp-tender — covering steams the vegetables instead of keeping them crisp.`,
       `Return protein, toss with ${ctx.spices.join(', ') || 'sauce'}, serve over ${ctx.starch ?? 'rice'}.`,
     ],
   },
@@ -95,7 +97,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     steps: (ctx) => [
       `Sauté ${ctx.aromatics.join(', ') || 'aromatics'} until soft.`,
       `Add ${ctx.vegetables.join(', ') || 'vegetables'}${ctx.protein ? ` and ${ctx.protein}` : ''}, then cover with liquid.`,
-      'Simmer until everything is tender, 20-25 min.',
+      'Partially cover (lid ajar) and simmer until everything is tender, 20-25 min — fully covered can boil over, fully uncovered reduces the liquid faster than you probably want.',
       'Adjust seasoning and serve.',
     ],
   },
@@ -109,8 +111,8 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     difficulty: 1,
     healthModifier: 1.0,
     steps: (ctx) => [
-      `Marinate ${ctx.protein ?? 'protein'} briefly in ${ctx.fat ?? 'oil'}${ctx.acid ? ` and ${ctx.acid}` : ''} with ${ctx.spices.join(', ') || 'seasoning'}.`,
-      'Grill or pan-sear over high heat to a good crust.',
+      `Marinate ${ctx.protein ?? 'protein'} briefly in ${ctx.fat ?? 'oil'}${oilAdjustmentNote(ctx.proteinFatG)}${ctx.acid ? ` and ${ctx.acid}` : ''} with ${ctx.spices.join(', ') || 'seasoning'}.`,
+      'Grill or pan-sear over high heat, uncovered, to a good crust.',
       'Rest 5 minutes before slicing.',
     ],
   },
@@ -127,7 +129,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
       'Preheat oven to 375°F (190°C).',
       `Layer ${ctx.starch ?? 'starch'}${ctx.protein ? ` and ${ctx.protein}` : ''} with ${ctx.vegetables.join(', ') || 'vegetables'} in a baking dish.`,
       `Top with ${ctx.dairy ?? 'cheese'} and ${ctx.spices.join(', ') || 'seasoning'}.`,
-      'Bake until bubbling and golden on top, about 30 min.',
+      'Cover with foil and bake for the first 20 min so the inside cooks through without the top burning, then uncover for the last 10 min to brown and bubble.',
     ],
   },
   {
@@ -141,7 +143,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     healthModifier: 1.15,
     steps: (ctx) => [
       `Bring water to a boil in a steamer pot.`,
-      `Steam ${ctx.vegetables.join(', ') || 'vegetables'}${ctx.protein ? ` and ${ctx.protein}` : ''} until just tender.`,
+      `Steam ${ctx.vegetables.join(', ') || 'vegetables'}${ctx.protein ? ` and ${ctx.protein}` : ''} under a tight-fitting lid until just tender — the whole technique depends on trapped steam, so don't lift the lid more than once or twice to check.`,
       `Finish with ${ctx.acid ?? 'a squeeze of citrus'} and ${ctx.spices.join(', ') || 'seasoning'}.`,
     ],
   },
@@ -156,7 +158,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     healthModifier: 1.05,
     steps: (ctx) => [
       `Bring ${ctx.protein ? 'a pot of liquid' : 'liquid'} to a gentle simmer with ${ctx.aromatics.join(', ') || 'aromatics'}${ctx.acid ? ` and ${ctx.acid}` : ''}.`,
-      `Add ${ctx.protein ?? 'protein'} and poach gently until just cooked through — do not boil.`,
+      `Add ${ctx.protein ?? 'protein'} and poach gently, uncovered, until just cooked through — leaving it uncovered lets you watch for the barely-trembling surface poaching needs; a lid can push it to a boil unnoticed.`,
       'Remove with a slotted spoon and rest briefly before serving.',
     ],
   },
@@ -170,9 +172,9 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     difficulty: 3,
     healthModifier: 0.55,
     steps: (ctx) => [
-      `Heat ${ctx.fat ?? 'oil'} to 350°F (175°C) in a deep, heavy pot.`,
+      `Heat ${ctx.fat ?? 'oil'} to 350°F (175°C) in a deep, heavy pot — never cover a pot of hot oil, it traps steam and moisture that can cause dangerous spattering.`,
       `Coat ${ctx.protein ?? 'protein'} in a ${ctx.starch ?? 'starch'}-based batter or breading, seasoned with ${ctx.spices.join(', ') || 'seasoning'}.`,
-      'Fry in batches until golden and cooked through, then drain on a rack.',
+      'Fry in batches, uncovered, until golden and cooked through, then drain on a rack.',
     ],
   },
   {
@@ -208,7 +210,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
       `Cream 125g ${ctx.fat ?? 'butter'} with 200g ${ctx.sweetener ?? 'sugar'} until light and fluffy, about 3 minutes.`,
       `Beat in 2 ${ctx.egg ?? 'eggs'}, one at a time${ctx.spices.length ? `, then stir in ${ctx.spices.join(', ')}` : ''}.`,
       `Alternate folding in the flour mixture and 65ml ${ctx.dairy ?? 'milk'}, starting and ending with flour, until just combined — do not overmix.`,
-      'Pour into the pan and bake until a toothpick comes out clean, 25-35 min. Cool before removing from the pan.',
+      'Pour into the pan and bake until a toothpick comes out clean, 25-35 min — avoid opening the oven door for at least the first 20 min, a temperature drop this early can make the cake sink. Cool before removing from the pan.',
     ],
   },
   {
@@ -229,7 +231,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
         ? `Add ${ctx.acid} for stability, then whip in 100g ${ctx.sweetener ?? 'sugar'} a spoonful at a time until stiff, glossy peaks form.`
         : `Whip in 100g ${ctx.sweetener ?? 'sugar'} a spoonful at a time until stiff, glossy peaks form.`,
       `Fold in ${ctx.spices.join(', ') || 'flavoring'} if using.`,
-      'Pipe or spoon onto the sheet pan and bake low and slow until crisp and dry, 1.5-2 hours. Cool completely before removing.',
+      'Pipe or spoon onto the sheet pan and bake low and slow until crisp and dry, 1.5-2 hours, propping the oven door open a crack for the last 30 min so escaping moisture doesn\'t turn them chewy. Cool completely before removing.',
     ],
   },
   {

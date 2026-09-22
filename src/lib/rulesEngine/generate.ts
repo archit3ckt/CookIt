@@ -213,6 +213,7 @@ function buildRecipeForTechnique(
   const byRole = (role: IngredientRole) => byRoleAssignment[role] ?? [];
   const ctx: TechniqueContext = {
     protein: byRole('protein')[0]?.def.name,
+    proteinFatG: byRole('protein')[0]?.def.macros.fatG,
     fat: byRole('fat')[0]?.def.name,
     acid: byRole('acid')[0]?.def.name,
     aromatics: byRole('aromatic').map((c) => c.def.name),

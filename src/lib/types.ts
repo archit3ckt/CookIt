@@ -88,6 +88,8 @@ export interface TechniqueTemplate {
 
 export interface TechniqueContext {
   protein?: string;
+  /** Grams of fat per 100g of the chosen protein — lets steps() adjust added-oil advice to how fatty the cut already is. */
+  proteinFatG?: number;
   fat?: string;
   acid?: string;
   aromatics: string[];

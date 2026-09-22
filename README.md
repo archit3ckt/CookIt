@@ -59,7 +59,17 @@ minimize food waste by prioritizing ingredients close to expiry.
    half isn't wasted." Written as a generic source→component-A/component-B
    registry, not eggs-specific, so a future split (citrus zest vs. juice,
    etc.) is just another registry entry.
-4. **Ranking** — sort suggestions by waste reduction (uses what's expiring
+4. **Cooking nuance** (`src/lib/rulesEngine/cookingNotes.ts`) — step text
+   isn't fixed regardless of what's actually being cooked. Added-oil advice
+   scales to the chosen protein's real fat content (from `macros.fatG`):
+   bacon/duck-level cuts get "go light, this renders its own fat," while
+   chicken breast/cod-level cuts get "don't skimp, it'll stick." Every
+   technique's steps now say explicitly whether to cover — braise traps
+   moisture and reduces only at the end; sauté/stir-fry/grill/roast stay
+   uncovered so browning isn't steamed away; steam depends entirely on a
+   tight lid; deep-fry is never covered (oil safety); poach stays uncovered
+   so a rolling boil doesn't sneak up unnoticed.
+5. **Ranking** — sort suggestions by waste reduction (uses what's expiring
    soonest), time, ease, health, or protein content; filter by max cook time
    or minimum health score.
 
@@ -89,7 +99,7 @@ src/
   lib/
     types.ts           # Domain types
     db/                # SQLite schema + pantry CRUD + usePantry hook
-    rulesEngine/        # ingredients.ts, techniques.ts, generate.ts, rank.ts, byproducts.ts, flavorCompounds.ts
+    rulesEngine/        # ingredients.ts, techniques.ts, generate.ts, rank.ts, byproducts.ts, flavorCompounds.ts, cookingNotes.ts
     barcode.ts          # Open Food Facts lookup
     ocr.ts               # Google Cloud Vision text extraction
     receipt.ts           # OCR text -> candidate pantry items
