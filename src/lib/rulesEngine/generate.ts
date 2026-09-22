@@ -16,17 +16,18 @@ function pairingScore(a: IngredientDef, b: IngredientDef): number {
   return a.pairsWith.includes(b.id) || b.pairsWith.includes(a.id) ? 1 : 0;
 }
 
+/**
+ * Fraction of chosen ingredients that connect to at least one other chosen
+ * ingredient via a known pairing. A dish is "balanced" when every ingredient
+ * is tied in by something (often a shared aromatic or fat), not when every
+ * possible pair directly pairs — that pairwise-average version unfairly
+ * punished larger, perfectly normal dishes since the pairing graph is a
+ * sparse, hand-curated sample rather than an exhaustive compatibility matrix.
+ */
 function averagePairing(defs: IngredientDef[]): number {
   if (defs.length < 2) return 0.5; // neutral score, nothing to clash with
-  let total = 0;
-  let pairs = 0;
-  for (let i = 0; i < defs.length; i++) {
-    for (let j = i + 1; j < defs.length; j++) {
-      total += pairingScore(defs[i], defs[j]);
-      pairs++;
-    }
-  }
-  return pairs === 0 ? 0.5 : total / pairs;
+  const connected = defs.filter((d, i) => defs.some((other, j) => j !== i && pairingScore(d, other) > 0)).length;
+  return connected / defs.length;
 }
 
 function urgency(daysUntilExpiry: number): number {
@@ -160,6 +161,8 @@ function buildRecipeForTechnique(
   const balanceScore = averagePairing(defs);
   const wasteScore =
     chosen.reduce((sum, c) => sum + urgency(c.daysUntilExpiry), 0) / Math.max(1, chosen.length);
+  const avgHealth = defs.reduce((sum, d) => sum + d.healthScore, 0) / Math.max(1, defs.length);
+  const healthScore = Math.max(0, Math.min(1, avgHealth * technique.healthModifier));
 
   const mainName = ctx.protein ?? defs[0]?.name ?? 'Pantry';
   const title = `${technique.name}: ${mainName}${ctx.vegetables[0] ? ` with ${ctx.vegetables[0]}` : ''}`;
@@ -174,6 +177,7 @@ function buildRecipeForTechnique(
     difficulty: technique.difficulty,
     balanceScore,
     wasteScore,
+    healthScore,
   };
 }
 
@@ -195,7 +199,7 @@ export function generateRecipes(pantryItems: PantryItem[]): GeneratedRecipe[] {
   for (const technique of TECHNIQUES) {
     const recipe = buildRecipeForTechnique(technique, pantry);
     // Only keep combos that clear a minimum flavor-balance bar.
-    if (recipe && recipe.balanceScore >= 0.34) {
+    if (recipe && recipe.balanceScore >= 0.6) {
       recipes.push(recipe);
     }
   }

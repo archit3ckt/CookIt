@@ -3,7 +3,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { usePantry } from '../lib/db/usePantry';
 import { generateRecipes } from '../lib/rulesEngine/generate';
-import { filterAndSort } from '../lib/rulesEngine/rank';
+import { filterAndSort, healthLabel } from '../lib/rulesEngine/rank';
 import { cacheRecipes } from '../lib/recipeCache';
 import { RecipeSort } from '../lib/types';
 
@@ -11,18 +11,26 @@ const SORTS: { key: RecipeSort; label: string }[] = [
   { key: 'waste', label: 'Reduce waste' },
   { key: 'time', label: 'Fastest' },
   { key: 'ease', label: 'Easiest' },
+  { key: 'health', label: 'Healthiest' },
+];
+
+const HEALTH_FILTERS: { key: string; label: string; minHealth: number | undefined }[] = [
+  { key: 'any', label: 'Any health', minHealth: undefined },
+  { key: 'fair', label: 'Fairly healthy', minHealth: 0.6 },
+  { key: 'high', label: 'Very healthy', minHealth: 0.75 },
 ];
 
 export default function RecipesScreen() {
   const { items, loading } = usePantry();
   const [sort, setSort] = useState<RecipeSort>('waste');
   const [maxMinutes, setMaxMinutes] = useState<number | undefined>(undefined);
+  const [minHealth, setMinHealth] = useState<number | undefined>(undefined);
 
   const recipes = useMemo(() => {
     const generated = generateRecipes(items);
     cacheRecipes(generated);
-    return filterAndSort(generated, sort, { maxMinutes });
-  }, [items, sort, maxMinutes]);
+    return filterAndSort(generated, sort, { maxMinutes, minHealth });
+  }, [items, sort, maxMinutes, minHealth]);
 
   if (loading) return null;
 
@@ -52,6 +60,17 @@ export default function RecipesScreen() {
           </Pressable>
         ))}
       </View>
+      <View style={styles.sortRow}>
+        {HEALTH_FILTERS.map((f) => (
+          <Pressable
+            key={f.key}
+            style={[styles.sortChip, minHealth === f.minHealth && styles.sortChipActive]}
+            onPress={() => setMinHealth(f.minHealth)}
+          >
+            <Text style={minHealth === f.minHealth ? styles.sortTextActive : styles.sortText}>{f.label}</Text>
+          </Pressable>
+        ))}
+      </View>
 
       <FlatList
         data={recipes}
@@ -67,7 +86,7 @@ export default function RecipesScreen() {
           <Pressable style={styles.card} onPress={() => router.push(`/recipe/${item.id}`)}>
             <Text style={styles.cardTitle}>{item.title}</Text>
             <Text style={styles.cardMeta}>
-              {item.estimatedMinutes} min · {'★'.repeat(item.difficulty)}
+              {item.estimatedMinutes} min · {'★'.repeat(item.difficulty)} · {healthLabel(item.healthScore)}
               {item.wasteScore > 0.5 ? ' · uses items expiring soon' : ''}
             </Text>
           </Pressable>

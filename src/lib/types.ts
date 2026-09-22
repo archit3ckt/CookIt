@@ -18,6 +18,8 @@ export interface IngredientDef {
   pairsWith: string[];
   /** Typical fridge/pantry shelf life in days, used to estimate expiry when none is scanned. */
   defaultShelfLifeDays: number;
+  /** 0-1 simplified nutrition heuristic (whole/nutrient-dense vs. processed/empty-calorie). Not medical advice. */
+  healthScore: number;
 }
 
 export type Unit = 'g' | 'kg' | 'ml' | 'l' | 'piece' | 'unknown';
@@ -41,7 +43,12 @@ export type Technique =
   | 'stir-fry'
   | 'raw-salad'
   | 'simmer-soup'
-  | 'grill';
+  | 'grill'
+  | 'bake'
+  | 'steam'
+  | 'poach'
+  | 'deep-fry'
+  | 'blend';
 
 export interface TechniqueTemplate {
   id: Technique;
@@ -53,6 +60,8 @@ export interface TechniqueTemplate {
   baseMinutes: number;
   minutesPerExtraIngredient: number;
   difficulty: 1 | 2 | 3;
+  /** Multiplier applied to the averaged ingredient health score (e.g. deep-fry lowers it, steaming raises it). */
+  healthModifier: number;
   steps: (ctx: TechniqueContext) => string[];
 }
 
@@ -79,6 +88,8 @@ export interface GeneratedRecipe {
   balanceScore: number;
   /** 0-1, higher = uses more soon-to-expire pantry items. */
   wasteScore: number;
+  /** 0-1 simplified nutrition heuristic for the whole dish (ingredient healthScores x technique modifier). */
+  healthScore: number;
 }
 
-export type RecipeSort = 'waste' | 'time' | 'ease';
+export type RecipeSort = 'waste' | 'time' | 'ease' | 'health';

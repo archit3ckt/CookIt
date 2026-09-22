@@ -2,6 +2,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { getCachedRecipe } from '../../lib/recipeCache';
 import { INGREDIENTS_BY_ID } from '../../lib/rulesEngine/ingredients';
+import { healthLabel } from '../../lib/rulesEngine/rank';
 
 export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -19,7 +20,7 @@ export default function RecipeDetailScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>{recipe.title}</Text>
       <Text style={styles.meta}>
-        {recipe.estimatedMinutes} min · {'★'.repeat(recipe.difficulty)} difficulty
+        {recipe.estimatedMinutes} min · {'★'.repeat(recipe.difficulty)} difficulty · {healthLabel(recipe.healthScore)}
       </Text>
 
       <Text style={styles.sectionHeader}>Ingredients</Text>
