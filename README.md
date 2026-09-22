@@ -21,11 +21,27 @@ minimize food waste by prioritizing ingredients close to expiry.
    satisfy more than one role, e.g. eggs are both `fat` and `egg`, so a
    generic role's greedy pick can't be allowed to consume the only candidate
    a narrower role needs). It then scores the result by how connected the
-   ingredients are (does everything tie in via a shared aromatic/fat/acid?)
-   — the same shape of heuristic a chef uses, encoded as data instead of
-   looked-up recipes. Ingredient ids are type-checked against a master list
-   (`ingredients.ts`), so a typo'd pairing reference fails `tsc` rather than
-   silently degrading the graph.
+   ingredients are — the same shape of heuristic a chef uses, encoded as
+   data instead of looked-up recipes. Ingredient ids are type-checked
+   against a master list (`ingredients.ts`), so a typo'd pairing reference
+   fails `tsc` rather than silently degrading the graph.
+
+   "Connected" isn't just a hand-guessed list anymore. `flavorCompounds.ts`
+   carries real GC/MS-derived aroma-compound data for 112 of the ~139
+   ingredients, sourced from Ahn et al.'s "Flavor network and the principles
+   of food pairing" (*Scientific Reports*, 2011) — two ingredients pair if
+   they share enough real aroma compounds, which is the actual food-pairing
+   hypothesis the paper tests, not a guess. Getting this right took real
+   tuning: requiring just *any* shared compound makes 66% of all pairs
+   "connect" (almost everything shares something), and normalizing by set
+   size (Jaccard) is worse — it's dominated by near-duplicate ingredients
+   (chicken breast vs. thigh scores 1.00) while missing genuine classics
+   like tomato+basil (basil's tiny cataloged compound set makes its Jaccard
+   score misleadingly low). A plain shared-compound-count threshold, tuned
+   against known pairings, turned out to be the more defensible signal.
+   Ingredients outside that 112 (tofu, quinoa, baking powder, and other
+   items this 2010-era, largely-Western dataset doesn't cover) fall back to
+   the hand-curated `pairsWith` list — nothing regresses for them.
 
    Baking is a structurally different problem from savory cooking — a cake
    isn't "protein+fat+aromatic present," it's flour:sugar:fat:egg in
@@ -73,7 +89,7 @@ src/
   lib/
     types.ts           # Domain types
     db/                # SQLite schema + pantry CRUD + usePantry hook
-    rulesEngine/        # ingredients.ts, techniques.ts, generate.ts, rank.ts, byproducts.ts
+    rulesEngine/        # ingredients.ts, techniques.ts, generate.ts, rank.ts, byproducts.ts, flavorCompounds.ts
     barcode.ts          # Open Food Facts lookup
     ocr.ts               # Google Cloud Vision text extraction
     receipt.ts           # OCR text -> candidate pantry items

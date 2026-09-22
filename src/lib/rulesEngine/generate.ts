@@ -1,5 +1,6 @@
 import { GeneratedRecipe, IngredientDef, IngredientRole, Macros, PantryItem, TechniqueContext, TechniqueTemplate } from '../types';
 import { deriveVirtualPantryItems, pairByproductRecipes } from './byproducts';
+import { FLAVOR_COMPOUND_IDS } from './flavorCompounds';
 import { INGREDIENTS_BY_ID } from './ingredients';
 import { TECHNIQUES } from './techniques';
 
@@ -12,8 +13,37 @@ interface PantryIngredient {
   daysUntilExpiry: number;
 }
 
+// Below this many *shared* compounds, "connected" stops meaning anything. Verified empirically:
+// requiring just 1 shared compound makes 66% of all matched-ingredient pairs "connect" (almost
+// everything shares *something* — the well-known flaw in naive food-pairing-hypothesis
+// implementations), which would make balanceScore stop discriminating good combos from bad ones.
+// Normalizing by set size (Jaccard/overlap-coefficient) doesn't fix this either — it's dominated
+// by small-set artifacts (chicken breast vs. chicken thigh scores 1.00; flour vs. pasta scores 1.00
+// off just 4 shared compounds because flour's tiny cataloged set is a near-subset of pasta's).
+// A plain shared-compound *count* threshold is the more defensible signal here: 5 is calibrated to
+// clear every classic pairing spot-checked while building this (garlic/onion=16, salmon/dill=11,
+// cilantro/lime=9, mint/lamb=6 — the floor), while roughly halving density vs. the naive rule.
+const MIN_SHARED_COMPOUNDS = 5;
+
+function sharedCompoundCount(aId: string, bId: string): number {
+  const a = FLAVOR_COMPOUND_IDS[aId];
+  const b = FLAVOR_COMPOUND_IDS[bId];
+  if (!a || !b) return 0;
+  const bSet = new Set(b);
+  return a.reduce((n, c) => n + (bSet.has(c) ? 1 : 0), 0);
+}
+
+/**
+ * Two ingredients are "paired" if either is true:
+ * - they share at least MIN_SHARED_COMPOUNDS real detected aroma compounds
+ *   (chemistry-sourced, see flavorCompounds.ts) — the actual food-pairing
+ *   hypothesis, not a guess.
+ * - one's hand-curated `pairsWith` lists the other — the fallback for the
+ *   ~20% of ingredients the chemistry dataset doesn't cover.
+ */
 function pairingScore(a: IngredientDef, b: IngredientDef): number {
   if (a.id === b.id) return 0;
+  if (sharedCompoundCount(a.id, b.id) >= MIN_SHARED_COMPOUNDS) return 1;
   return a.pairsWith.includes(b.id) || b.pairsWith.includes(a.id) ? 1 : 0;
 }
 
