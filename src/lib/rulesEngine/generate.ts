@@ -1,4 +1,13 @@
-import { GeneratedRecipe, IngredientDef, IngredientRole, Macros, PantryItem, TechniqueContext, TechniqueTemplate } from '../types';
+import {
+  GeneratedRecipe,
+  IngredientDef,
+  IngredientRole,
+  Macros,
+  PantryItem,
+  RecipeIngredientQty,
+  TechniqueContext,
+  TechniqueTemplate,
+} from '../types';
 import { deriveVirtualPantryItems, pairByproductRecipes } from './byproducts';
 import { FLAVOR_COMPOUND_IDS } from './flavorCompounds';
 import { INGREDIENTS_BY_ID } from './ingredients';
@@ -128,6 +137,8 @@ function pickMultiple(
 interface RoleFillState {
   chosen: PantryIngredient[];
   excludeIds: Set<string>;
+  /** The role each chosen ingredient was picked for — recorded at assignment time since one ingredient can carry several roles in its def, but is only ever used for the one role that filled it here. */
+  roleByIngredientId: Map<string, IngredientRole>;
 }
 
 /**
@@ -146,6 +157,7 @@ function makeRoleFiller(
     picks.forEach((p) => {
       state.chosen.push(p);
       state.excludeIds.add(p.def.id);
+      state.roleByIngredientId.set(p.def.id, role);
     });
   }
 
@@ -245,6 +257,7 @@ function buildContext(byRoleAssignment: Partial<Record<IngredientRole, PantryIng
 function finalizeRecipe(
   technique: TechniqueTemplate,
   chosen: PantryIngredient[],
+  roleByIngredientId: Map<string, IngredientRole>,
   steps: string[],
   title: string,
   requiredRoleCount: number
@@ -256,12 +269,19 @@ function finalizeRecipe(
   const avgHealth = defs.reduce((sum, d) => sum + d.healthScore, 0) / Math.max(1, defs.length);
   const healthScore = Math.max(0, Math.min(1, avgHealth * technique.healthModifier));
   const macros = averageMacros(defs);
+  const ingredients: RecipeIngredientQty[] = defs.map((d) => ({
+    ingredientId: d.id,
+    role: roleByIngredientId.get(d.id) ?? d.roles[0],
+    perServingQty: d.servingQty,
+    unit: d.unit,
+  }));
 
   return {
     id: `${technique.id}-${defs.map((d) => d.id).sort().join('-')}`,
     title,
     technique: technique.id,
     ingredientIds: defs.map((d) => d.id),
+    ingredients,
     steps,
     estimatedMinutes: technique.baseMinutes + technique.minutesPerExtraIngredient * Math.max(0, defs.length - requiredRoleCount),
     difficulty: technique.difficulty,
@@ -276,7 +296,7 @@ function buildRecipeForTechnique(
   technique: TechniqueTemplate,
   pantry: PantryIngredient[]
 ): GeneratedRecipe | null {
-  const state: RoleFillState = { chosen: [], excludeIds: new Set() };
+  const state: RoleFillState = { chosen: [], excludeIds: new Set(), roleByIngredientId: new Map() };
 
   if (technique.kind === 'flat') {
     const byRoleAssignment: Partial<Record<IngredientRole, PantryIngredient[]>> = {};
@@ -290,7 +310,14 @@ function buildRecipeForTechnique(
     const genericTitle = `${technique.name}: ${mainName}${ctx.vegetables[0] ? ` with ${ctx.vegetables[0]}` : ''}`;
     const chosenIds = state.chosen.map((c) => c.def.id);
     const title = matchNamedDish(technique.id, chosenIds) ?? genericTitle;
-    return finalizeRecipe(technique, state.chosen, technique.steps(ctx), title, technique.requiredRoles.length);
+    return finalizeRecipe(
+      technique,
+      state.chosen,
+      state.roleByIngredientId,
+      technique.steps(ctx),
+      title,
+      technique.requiredRoles.length
+    );
   }
 
   // Composite: one role-filler per component, all sharing `state` so an ingredient picked
@@ -323,7 +350,14 @@ function buildRecipeForTechnique(
   const chosenIds = state.chosen.map((c) => c.def.id);
   const title = matchNamedDish(technique.id, chosenIds) ?? genericTitle;
   const requiredRoleCount = technique.components.reduce((n, c) => n + c.requiredRoles.length, 0);
-  return finalizeRecipe(technique, state.chosen, technique.assemble(componentContexts), title, requiredRoleCount);
+  return finalizeRecipe(
+    technique,
+    state.chosen,
+    state.roleByIngredientId,
+    technique.assemble(componentContexts),
+    title,
+    requiredRoleCount
+  );
 }
 
 /**

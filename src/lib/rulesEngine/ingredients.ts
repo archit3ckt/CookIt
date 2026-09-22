@@ -1,4 +1,4 @@
-import { IngredientDef } from '../types';
+import { IngredientDef, Unit } from '../types';
 
 /**
  * Seed ingredient knowledge base: roles, a hand-curated flavor-pairing graph
@@ -52,7 +52,7 @@ const INGREDIENT_ID_LIST = [
 ] as const;
 
 type SeedId = (typeof INGREDIENT_ID_LIST)[number];
-type SeedEntry = Omit<IngredientDef, 'id' | 'pairsWith'> & { pairsWith: SeedId[] };
+type SeedEntry = Omit<IngredientDef, 'id' | 'pairsWith' | 'unit' | 'servingQty'> & { pairsWith: SeedId[] };
 
 /** Shorthand: [calories, proteinG, carbsG, fatG, sodiumMg] per 100g. */
 function m(calories: number, proteinG: number, carbsG: number, fatG: number, sodiumMg: number) {
@@ -231,7 +231,191 @@ const SEED: Record<SeedId, SeedEntry> = {
   'egg-yolk': { name: 'Egg yolk', roles: ['egg-yolk'], pairsWith: ['sugar', 'milk', 'cream', 'vanilla-extract'], defaultShelfLifeDays: 2, healthScore: 0.55, macros: m(322, 15.9, 3.6, 27, 48) },
 };
 
-export const INGREDIENTS: IngredientDef[] = INGREDIENT_ID_LIST.map((id) => ({ id, ...SEED[id] }));
+/** Shorthand for a UNIT_INFO entry: the unit this ingredient is normally bought/tracked in, and a typical single-serving amount in that unit. */
+function u(unit: Unit, servingQty: number) {
+  return { unit, servingQty };
+}
+
+/**
+ * The unit each ingredient is normally bought/tracked in, and how much of it
+ * a single serving typically uses. Kept as its own table (rather than inline
+ * on each SEED entry) so every id is required to have one — Record<SeedId, ...>
+ * fails `tsc` on a missing entry — without reformatting the SEED table above.
+ * Heuristic sizing for the servings stepper and pantry-shortfall check, not a
+ * precise culinary reference.
+ */
+const UNIT_INFO: Record<SeedId, { unit: Unit; servingQty: number }> = {
+  // ---- Proteins ----
+  'chicken-breast': u('piece', 1),
+  'chicken-thigh': u('piece', 1),
+  turkey: u('g', 150),
+  'ground-beef': u('g', 150),
+  'beef-steak': u('piece', 1),
+  'pork-chop': u('piece', 1),
+  bacon: u('g', 30),
+  sausage: u('piece', 2),
+  lamb: u('g', 150),
+  duck: u('piece', 1),
+  salmon: u('piece', 1),
+  tuna: u('g', 150),
+  shrimp: u('g', 150),
+  cod: u('piece', 1),
+  tilapia: u('piece', 1),
+  mussels: u('g', 200),
+  tofu: u('g', 150),
+  tempeh: u('g', 150),
+  eggs: u('piece', 2),
+  chickpeas: u('g', 150),
+  'black-beans': u('g', 150),
+  'kidney-beans': u('g', 150),
+  lentils: u('g', 150),
+  'greek-yogurt': u('g', 100),
+
+  // ---- Fats ----
+  butter: u('g', 15),
+  'olive-oil': u('ml', 15),
+  'sesame-oil': u('ml', 5),
+  'vegetable-oil': u('ml', 15),
+  'coconut-oil': u('ml', 15),
+  ghee: u('g', 15),
+  avocado: u('piece', 0.5),
+  tahini: u('g', 20),
+  mayonnaise: u('g', 15),
+
+  // ---- Acids ----
+  lemon: u('piece', 0.5),
+  lime: u('piece', 0.5),
+  vinegar: u('ml', 15),
+  'rice-vinegar': u('ml', 15),
+  'balsamic-vinegar': u('ml', 15),
+  'white-wine': u('ml', 60),
+  tamarind: u('g', 15),
+
+  // ---- Aromatics ----
+  garlic: u('piece', 0.3),
+  onion: u('piece', 0.5),
+  shallot: u('piece', 0.5),
+  ginger: u('g', 10),
+  scallion: u('piece', 2),
+  leek: u('piece', 0.5),
+  celery: u('piece', 1),
+  cilantro: u('g', 5),
+  lemongrass: u('piece', 1),
+  chili: u('piece', 1),
+
+  // ---- Starches ----
+  rice: u('g', 75),
+  'brown-rice': u('g', 75),
+  pasta: u('g', 85),
+  potato: u('piece', 1),
+  'sweet-potato': u('piece', 1),
+  tortilla: u('piece', 2),
+  bread: u('piece', 2),
+  quinoa: u('g', 60),
+  couscous: u('g', 60),
+  'rice-noodles': u('g', 75),
+  bulgur: u('g', 60),
+  oats: u('g', 50),
+  cornmeal: u('g', 50),
+
+  // ---- Vegetables ----
+  tomato: u('piece', 1),
+  spinach: u('g', 60),
+  kale: u('g', 50),
+  'bell-pepper': u('piece', 0.5),
+  broccoli: u('g', 80),
+  cauliflower: u('g', 80),
+  carrot: u('piece', 1),
+  zucchini: u('piece', 0.5),
+  eggplant: u('piece', 0.5),
+  mushroom: u('g', 80),
+  cabbage: u('g', 80),
+  'brussels-sprouts': u('g', 80),
+  asparagus: u('g', 80),
+  'green-beans': u('g', 80),
+  peas: u('g', 60),
+  corn: u('piece', 0.5),
+  cucumber: u('piece', 0.5),
+  radish: u('piece', 2),
+  beet: u('piece', 1),
+  'butternut-squash': u('g', 100),
+  pumpkin: u('g', 100),
+
+  // ---- Dairy ----
+  cheddar: u('g', 30),
+  parmesan: u('g', 15),
+  feta: u('g', 30),
+  mozzarella: u('g', 40),
+  cream: u('ml', 30),
+  milk: u('ml', 100),
+  'sour-cream': u('g', 20),
+
+  // ---- Spices & herbs ----
+  thyme: u('g', 1),
+  dill: u('g', 3),
+  basil: u('g', 3),
+  cumin: u('g', 2),
+  'chili-flakes': u('g', 1),
+  paprika: u('g', 2),
+  cinnamon: u('g', 2),
+  turmeric: u('g', 2),
+  'black-pepper': u('g', 1),
+  oregano: u('g', 1),
+  rosemary: u('g', 2),
+  mint: u('g', 3),
+  parsley: u('g', 3),
+  'bay-leaf': u('piece', 1),
+  'curry-powder': u('g', 3),
+  'five-spice-powder': u('g', 2),
+  cardamom: u('g', 1),
+  nutmeg: u('g', 1),
+  'coriander-seed': u('g', 2),
+  sage: u('g', 2),
+
+  // ---- Sweeteners ----
+  sugar: u('g', 10),
+  honey: u('g', 15),
+  'maple-syrup': u('ml', 15),
+  'brown-sugar': u('g', 10),
+
+  // ---- Liquids & sauces ----
+  'soy-sauce': u('ml', 15),
+  'fish-sauce': u('ml', 10),
+  'chicken-stock': u('ml', 200),
+  'vegetable-stock': u('ml', 200),
+  'coconut-milk': u('ml', 100),
+  'red-wine': u('ml', 60),
+  'hoisin-sauce': u('ml', 15),
+  'oyster-sauce': u('ml', 10),
+  sriracha: u('ml', 10),
+  mustard: u('g', 10),
+  ketchup: u('g', 15),
+  'worcestershire-sauce': u('ml', 5),
+
+  // ---- Nuts & seeds ----
+  peanuts: u('g', 20),
+  almonds: u('g', 20),
+  cashews: u('g', 20),
+  walnuts: u('g', 20),
+  'sesame-seeds': u('g', 5),
+  'pine-nuts': u('g', 15),
+
+  // ---- Baking ----
+  flour: u('g', 60),
+  'baking-powder': u('g', 3),
+  'baking-soda': u('g', 2),
+  'vanilla-extract': u('ml', 3),
+
+  // ---- Egg components ----
+  'egg-white': u('piece', 2),
+  'egg-yolk': u('piece', 2),
+};
+
+export const INGREDIENTS: IngredientDef[] = INGREDIENT_ID_LIST.map((id) => ({
+  id,
+  ...SEED[id],
+  ...UNIT_INFO[id],
+}));
 
 export const INGREDIENTS_BY_ID: Record<string, IngredientDef> = Object.fromEntries(
   INGREDIENTS.map((i) => [i.id, i])

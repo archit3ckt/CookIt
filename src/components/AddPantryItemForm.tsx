@@ -29,11 +29,16 @@ export function AddPantryItemForm({ onAdd, onQueryChange }: Props) {
     if (!selected) return;
     const qty = Number(quantity) || 1;
     const daysUntilExpiry = days.trim() ? Number(days) : selected.defaultShelfLifeDays;
-    onAdd({ ingredient: selected, quantity: qty, unit: 'piece', daysUntilExpiry });
+    onAdd({ ingredient: selected, quantity: qty, unit: selected.unit, daysUntilExpiry });
     setQuery('');
     setSelected(null);
     setQuantity('1');
     setDays('');
+  };
+
+  const selectIngredient = (item: IngredientDef) => {
+    setSelected(item);
+    setQuantity(item.unit === 'piece' ? '1' : String(Math.round(item.servingQty * 4)));
   };
 
   return (
@@ -54,7 +59,7 @@ export function AddPantryItemForm({ onAdd, onQueryChange }: Props) {
           keyExtractor={(i) => i.id}
           style={styles.suggestions}
           renderItem={({ item }) => (
-            <Pressable style={styles.suggestionRow} onPress={() => setSelected(item)}>
+            <Pressable style={styles.suggestionRow} onPress={() => selectIngredient(item)}>
               <Text>{item.name}</Text>
             </Pressable>
           )}
@@ -64,7 +69,7 @@ export function AddPantryItemForm({ onAdd, onQueryChange }: Props) {
         <View style={styles.row}>
           <TextInput
             style={[styles.input, styles.smallInput]}
-            placeholder="Qty"
+            placeholder={`Qty (${selected.unit})`}
             keyboardType="numeric"
             value={quantity}
             onChangeText={setQuantity}

@@ -1,11 +1,10 @@
 import { type SQLiteDatabase } from 'expo-sqlite';
-import { Unit } from '../types';
+import { INGREDIENTS_BY_ID } from '../rulesEngine/ingredients';
 
 interface SeedPantryItem {
   ingredientId: string;
   label: string;
   quantity: number;
-  unit: Unit;
   /** null means no expiry date, same as a manually-added item where the user left it blank. */
   daysUntilExpiry: number | null;
 }
@@ -13,28 +12,30 @@ interface SeedPantryItem {
 // A realistic, varied pantry: some items expiring in the next couple of days (exercises the
 // waste-score sort), some mid-range, some shelf-stable with no expiry — and enough of the named
 // dish signatures' ingredients (see namedDishes.ts) to actually surface a few named suggestions
-// like Chicken Piccata and Garlic Butter Shrimp instead of only generic combos.
+// like Chicken Piccata and Garlic Butter Shrimp instead of only generic combos. Units come from
+// INGREDIENTS_BY_ID at insert time rather than being hand-typed here, so this data can't drift
+// out of sync with each ingredient's canonical unit.
 const SEED_PANTRY: SeedPantryItem[] = [
-  { ingredientId: 'chicken-breast', label: 'Chicken Breast', quantity: 2, unit: 'piece', daysUntilExpiry: 3 },
-  { ingredientId: 'butter', label: 'Butter', quantity: 200, unit: 'g', daysUntilExpiry: 30 },
-  { ingredientId: 'lemon', label: 'Lemon', quantity: 3, unit: 'piece', daysUntilExpiry: 10 },
-  { ingredientId: 'garlic', label: 'Garlic', quantity: 1, unit: 'piece', daysUntilExpiry: 20 },
-  { ingredientId: 'shrimp', label: 'Shrimp', quantity: 300, unit: 'g', daysUntilExpiry: 2 },
-  { ingredientId: 'salmon', label: 'Salmon Fillet', quantity: 2, unit: 'piece', daysUntilExpiry: 2 },
-  { ingredientId: 'dill', label: 'Fresh Dill', quantity: 1, unit: 'piece', daysUntilExpiry: 5 },
-  { ingredientId: 'onion', label: 'Onion', quantity: 4, unit: 'piece', daysUntilExpiry: 25 },
-  { ingredientId: 'carrot', label: 'Carrot', quantity: 5, unit: 'piece', daysUntilExpiry: 14 },
-  { ingredientId: 'potato', label: 'Potato', quantity: 6, unit: 'piece', daysUntilExpiry: 20 },
-  { ingredientId: 'olive-oil', label: 'Olive Oil', quantity: 500, unit: 'ml', daysUntilExpiry: 180 },
-  { ingredientId: 'eggs', label: 'Eggs', quantity: 12, unit: 'piece', daysUntilExpiry: 14 },
-  { ingredientId: 'spinach', label: 'Spinach', quantity: 200, unit: 'g', daysUntilExpiry: 4 },
-  { ingredientId: 'tomato', label: 'Tomato', quantity: 5, unit: 'piece', daysUntilExpiry: 6 },
-  { ingredientId: 'cheddar', label: 'Cheddar Cheese', quantity: 250, unit: 'g', daysUntilExpiry: 21 },
-  { ingredientId: 'pasta', label: 'Pasta', quantity: 500, unit: 'g', daysUntilExpiry: null },
-  { ingredientId: 'rice', label: 'Rice', quantity: 1, unit: 'kg', daysUntilExpiry: null },
-  { ingredientId: 'mushroom', label: 'Mushroom', quantity: 250, unit: 'g', daysUntilExpiry: 3 },
-  { ingredientId: 'red-wine', label: 'Red Wine', quantity: 750, unit: 'ml', daysUntilExpiry: 60 },
-  { ingredientId: 'beef-steak', label: 'Beef Steak', quantity: 2, unit: 'piece', daysUntilExpiry: 4 },
+  { ingredientId: 'chicken-breast', label: 'Chicken Breast', quantity: 2, daysUntilExpiry: 3 },
+  { ingredientId: 'butter', label: 'Butter', quantity: 200, daysUntilExpiry: 30 },
+  { ingredientId: 'lemon', label: 'Lemon', quantity: 3, daysUntilExpiry: 10 },
+  { ingredientId: 'garlic', label: 'Garlic', quantity: 1, daysUntilExpiry: 20 },
+  { ingredientId: 'shrimp', label: 'Shrimp', quantity: 300, daysUntilExpiry: 2 },
+  { ingredientId: 'salmon', label: 'Salmon Fillet', quantity: 2, daysUntilExpiry: 2 },
+  { ingredientId: 'dill', label: 'Fresh Dill', quantity: 15, daysUntilExpiry: 5 },
+  { ingredientId: 'onion', label: 'Onion', quantity: 4, daysUntilExpiry: 25 },
+  { ingredientId: 'carrot', label: 'Carrot', quantity: 5, daysUntilExpiry: 14 },
+  { ingredientId: 'potato', label: 'Potato', quantity: 6, daysUntilExpiry: 20 },
+  { ingredientId: 'olive-oil', label: 'Olive Oil', quantity: 500, daysUntilExpiry: 180 },
+  { ingredientId: 'eggs', label: 'Eggs', quantity: 12, daysUntilExpiry: 14 },
+  { ingredientId: 'spinach', label: 'Spinach', quantity: 200, daysUntilExpiry: 4 },
+  { ingredientId: 'tomato', label: 'Tomato', quantity: 5, daysUntilExpiry: 6 },
+  { ingredientId: 'cheddar', label: 'Cheddar Cheese', quantity: 250, daysUntilExpiry: 21 },
+  { ingredientId: 'pasta', label: 'Pasta', quantity: 500, daysUntilExpiry: null },
+  { ingredientId: 'rice', label: 'Rice', quantity: 1000, daysUntilExpiry: null },
+  { ingredientId: 'mushroom', label: 'Mushroom', quantity: 250, daysUntilExpiry: 3 },
+  { ingredientId: 'red-wine', label: 'Red Wine', quantity: 750, daysUntilExpiry: 60 },
+  { ingredientId: 'beef-steak', label: 'Beef Steak', quantity: 2, daysUntilExpiry: 4 },
 ];
 
 const SEED_MADE_RECIPES = [
@@ -92,6 +93,7 @@ export async function seedDevData(db: SQLiteDatabase): Promise<void> {
     const addedOn = new Date().toISOString().slice(0, 10);
     for (let i = 0; i < SEED_PANTRY.length; i++) {
       const item = SEED_PANTRY[i];
+      const unit = INGREDIENTS_BY_ID[item.ingredientId]?.unit ?? 'unknown';
       await db.runAsync(
         `INSERT INTO pantry_items (id, ingredientId, label, quantity, unit, expiresOn, addedOn, source)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -100,7 +102,7 @@ export async function seedDevData(db: SQLiteDatabase): Promise<void> {
           item.ingredientId,
           item.label,
           item.quantity,
-          item.unit,
+          unit,
           isoDaysFromNow(item.daysUntilExpiry),
           addedOn,
           'manual',

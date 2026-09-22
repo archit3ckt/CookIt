@@ -38,6 +38,10 @@ export interface IngredientDef {
   healthScore: number;
   /** Reference nutrition data, per 100g. Not a substitute for verified nutrition facts. */
   macros: Macros;
+  /** The unit this ingredient is normally bought/tracked in — grams for most, ml for liquids, a plain count for whole produce/eggs. */
+  unit: Unit;
+  /** Typical amount used in one serving of a dish, in `unit`. */
+  servingQty: number;
 }
 
 export type Unit = 'g' | 'kg' | 'ml' | 'l' | 'piece' | 'unknown';
@@ -141,11 +145,22 @@ export interface TechniqueContext {
   eggYolk?: string;
 }
 
+/** One chosen ingredient's typical amount for a single serving of the dish. */
+export interface RecipeIngredientQty {
+  ingredientId: string;
+  role: IngredientRole;
+  /** Typical quantity for one serving, in `unit` — a sizing heuristic for scaling by servings and flagging pantry shortfalls, not a precise culinary measurement. */
+  perServingQty: number;
+  unit: Unit;
+}
+
 export interface GeneratedRecipe {
   id: string;
   title: string;
   technique: Technique;
   ingredientIds: string[];
+  /** Per-ingredient serving-scalable quantities, parallel to ingredientIds. */
+  ingredients: RecipeIngredientQty[];
   steps: string[];
   estimatedMinutes: number;
   difficulty: 1 | 2 | 3;
