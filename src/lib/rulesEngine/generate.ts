@@ -2,6 +2,7 @@ import { GeneratedRecipe, IngredientDef, IngredientRole, Macros, PantryItem, Tec
 import { deriveVirtualPantryItems, pairByproductRecipes } from './byproducts';
 import { FLAVOR_COMPOUND_IDS } from './flavorCompounds';
 import { INGREDIENTS_BY_ID } from './ingredients';
+import { matchNamedDish } from './namedDishes';
 import { TECHNIQUES } from './techniques';
 
 const MULTI_ROLES: IngredientRole[] = ['aromatic', 'vegetable', 'spice'];
@@ -286,7 +287,9 @@ function buildRecipeForTechnique(
 
     const ctx = buildContext(byRoleAssignment);
     const mainName = ctx.protein ?? state.chosen[0]?.def.name ?? 'Pantry';
-    const title = `${technique.name}: ${mainName}${ctx.vegetables[0] ? ` with ${ctx.vegetables[0]}` : ''}`;
+    const genericTitle = `${technique.name}: ${mainName}${ctx.vegetables[0] ? ` with ${ctx.vegetables[0]}` : ''}`;
+    const chosenIds = state.chosen.map((c) => c.def.id);
+    const title = matchNamedDish(technique.id, chosenIds) ?? genericTitle;
     return finalizeRecipe(technique, state.chosen, technique.steps(ctx), title, technique.requiredRoles.length);
   }
 
@@ -316,7 +319,9 @@ function buildRecipeForTechnique(
     technique.components.map((c) => componentContexts[c.id].protein).find((p) => p != null) ??
     state.chosen[0]?.def.name ??
     'Pantry';
-  const title = `${technique.name}: ${mainName}`;
+  const genericTitle = `${technique.name}: ${mainName}`;
+  const chosenIds = state.chosen.map((c) => c.def.id);
+  const title = matchNamedDish(technique.id, chosenIds) ?? genericTitle;
   const requiredRoleCount = technique.components.reduce((n, c) => n + c.requiredRoles.length, 0);
   return finalizeRecipe(technique, state.chosen, technique.assemble(componentContexts), title, requiredRoleCount);
 }

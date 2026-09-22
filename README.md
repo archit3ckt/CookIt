@@ -88,7 +88,24 @@ minimize food waste by prioritizing ingredients close to expiry.
    uncovered so browning isn't steamed away; steam depends entirely on a
    tight lid; deep-fry is never covered (oil safety); poach stays uncovered
    so a rolling boil doesn't sneak up unnoticed.
-5. **Ranking** — sort suggestions by waste reduction (uses what's expiring
+5. **Named-dish recognition** (`src/lib/rulesEngine/namedDishes.ts`) — no
+   AI call, on purpose: a curated signature registry (~37 entries) matched
+   against what the generator actually produced. Each signature is a
+   technique + the "defining" ingredient ids that must all be present
+   (subset match — extra ingredients don't break it); the most specific
+   match wins. Chicken breast + butter + lemon via `saute` becomes "Chicken
+   Piccata" instead of the generic title; a plain chicken sauté without
+   lemon stays generic. This is honestly the weaker alternative to an LLM
+   call for naming — it can only ever recognize what's cataloged here,
+   never something novel — but it's free, instant, and needs no API key.
+   Every signature is checked against the technique's actual role data
+   (an id whose role the technique can never fill is a dead signature) and
+   against a realistic pantry that also supplies whatever else the
+   technique structurally requires — this caught two real pairing-data
+   gaps (pasta+cheddar, at 4 of the 5 shared compounds required to
+   connect — about as literal a "mac and cheese" near-miss as exists) and
+   fixed them the same way the rest of the pairing graph gets extended.
+6. **Ranking** — sort suggestions by waste reduction (uses what's expiring
    soonest), time, ease, health, or protein content; filter by max cook time
    or minimum health score.
 
