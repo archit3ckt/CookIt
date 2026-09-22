@@ -60,7 +60,7 @@ export default function PantryScreen() {
           </Pressable>
         </Link>
         <Link href="/recipes" asChild>
-          <Pressable style={[styles.actionButton, styles.recipesButton]}>
+          <Pressable style={StyleSheet.flatten([styles.actionButton, styles.recipesButton])}>
             <Text style={styles.actionButtonText}>🍳 Suggest recipes</Text>
           </Pressable>
         </Link>
