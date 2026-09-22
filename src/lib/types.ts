@@ -69,22 +69,56 @@ export type Technique =
   | 'blend'
   | 'cake'
   | 'meringue'
-  | 'custard';
+  | 'custard'
+  | 'kubbeh';
 
-export interface TechniqueTemplate {
+/**
+ * One part of a composite dish (a dumpling shell, its filling, the broth it
+ * simmers in) — filled the same way a flat technique's roles are, just
+ * scoped to this part rather than the whole dish.
+ */
+export interface TechniqueComponent {
+  id: string;
+  label: string;
+  requiredRoles: IngredientRole[];
+  optionalRoles: IngredientRole[];
+}
+
+interface TechniqueTemplateBase {
   id: Technique;
   name: string;
-  /** Roles the technique needs filled to produce a balanced dish. */
-  requiredRoles: IngredientRole[];
-  /** Roles that improve the dish but aren't mandatory. */
-  optionalRoles: IngredientRole[];
   baseMinutes: number;
   minutesPerExtraIngredient: number;
   difficulty: 1 | 2 | 3;
   /** Multiplier applied to the averaged ingredient health score (e.g. deep-fry lowers it, steaming raises it). */
   healthModifier: number;
+}
+
+/** A single-shot dish: one flat set of roles filled from the pantry, one linear set of steps. */
+export interface FlatTechniqueTemplate extends TechniqueTemplateBase {
+  kind: 'flat';
+  /** Roles the technique needs filled to produce a balanced dish. */
+  requiredRoles: IngredientRole[];
+  /** Roles that improve the dish but aren't mandatory. */
+  optionalRoles: IngredientRole[];
   steps: (ctx: TechniqueContext) => string[];
 }
+
+/**
+ * A dish assembled from multiple independently-filled parts — a dumpling's
+ * shell and filling, a pie's crust and filling, a sandwich's bread and its
+ * contents. Each component fills its own roles from the pantry (sharing one
+ * exclusion set with every other component, so the same physical ingredient
+ * can't become both the shell's starch and the filling's), then `assemble`
+ * describes how the finished parts come together.
+ */
+export interface CompositeTechniqueTemplate extends TechniqueTemplateBase {
+  kind: 'composite';
+  components: TechniqueComponent[];
+  assemble: (componentContexts: Record<string, TechniqueContext>) => string[];
+}
+
+export type TechniqueTemplate = FlatTechniqueTemplate | CompositeTechniqueTemplate;
 
 export interface TechniqueContext {
   protein?: string;
@@ -92,6 +126,7 @@ export interface TechniqueContext {
   proteinFatG?: number;
   fat?: string;
   acid?: string;
+  liquid?: string;
   aromatics: string[];
   starch?: string;
   vegetables: string[];

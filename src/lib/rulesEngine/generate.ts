@@ -124,39 +124,38 @@ function pickMultiple(
   return scored.slice(0, limit).map((s) => s.c);
 }
 
-function buildRecipeForTechnique(
-  technique: TechniqueTemplate,
-  pantry: PantryIngredient[]
-): GeneratedRecipe | null {
-  const chosen: PantryIngredient[] = [];
-  const excludeIds = new Set<string>();
-  // Tracks which ingredient(s) were picked *for* each role, keyed by role — not re-derived from
-  // `chosen` by scanning role membership. That distinction matters because an ingredient can carry
-  // multiple roles (e.g. butter is both 'fat' and 'dairy'): if it fills the 'fat' slot, a naive
-  // role-membership scan over `chosen` would also match it for a later 'dairy' lookup and shadow
-  // whatever was actually picked to fill 'dairy' (e.g. milk), depending on selection order.
-  const byRoleAssignment: Partial<Record<IngredientRole, PantryIngredient[]>> = {};
+interface RoleFillState {
+  chosen: PantryIngredient[];
+  excludeIds: Set<string>;
+}
 
+/**
+ * Binds a `fillRole` closure to one byRoleAssignment map, sharing the given
+ * state (chosen ingredients + exclusion set) with whatever else is filling
+ * roles alongside it — the mechanism that lets multiple technique
+ * components draw from one pantry without double-using an ingredient.
+ */
+function makeRoleFiller(
+  pantry: PantryIngredient[],
+  state: RoleFillState,
+  byRoleAssignment: Partial<Record<IngredientRole, PantryIngredient[]>>
+) {
   function assign(role: IngredientRole, picks: PantryIngredient[]) {
     byRoleAssignment[role] = [...(byRoleAssignment[role] ?? []), ...picks];
     picks.forEach((p) => {
-      chosen.push(p);
-      excludeIds.add(p.def.id);
+      state.chosen.push(p);
+      state.excludeIds.add(p.def.id);
     });
   }
 
-  function eligibleCount(role: IngredientRole): number {
-    return pantry.filter((c) => c.def.roles.includes(role) && !excludeIds.has(c.def.id)).length;
-  }
-
-  function fillRole(role: IngredientRole): boolean {
+  return function fillRole(role: IngredientRole): boolean {
     const isMulti = MULTI_ROLES.includes(role);
     if (isMulti) {
       const picks = pickMultiple(
         pantry,
         role,
-        chosen.map((c) => c.def),
-        excludeIds,
+        state.chosen.map((c) => c.def),
+        state.excludeIds,
         MULTI_ROLE_LIMIT
       );
       if (picks.length === 0) return false;
@@ -166,56 +165,68 @@ function buildRecipeForTechnique(
     const pick = pickBest(
       pantry,
       role,
-      chosen.map((c) => c.def),
-      excludeIds
+      state.chosen.map((c) => c.def),
+      state.excludeIds
     );
     if (!pick) return false;
     assign(role, [pick]);
     return true;
+  };
+}
+
+interface RoleFillTarget {
+  roles: IngredientRole[];
+  fillRole: (role: IngredientRole) => boolean;
+}
+
+/**
+ * Fills every (target, role) pair most-constrained-first — fewest eligible
+ * pantry candidates remaining, recomputed after each pick — across ALL
+ * targets at once, not target-by-target. A flat technique passes one
+ * target; a composite technique passes one per component, sharing state so
+ * the ordering is global. That matters because an ingredient can satisfy
+ * more than one role (eggs are both 'fat' and 'egg'), and — for composites
+ * specifically — the same physical ingredient could equally satisfy a role
+ * in two different components (e.g. both a shell and a filling wanting
+ * 'starch'). Filling roles in declared order, or component-by-component,
+ * can let a generic/early role's greedy pick consume the only candidate a
+ * later, narrower role needed even though a valid assignment exists.
+ * Processing the globally scarcest role first avoids that. Returns false
+ * (required) or does nothing (optional) when a role can't be filled.
+ */
+function fillRolesMRV(pantry: PantryIngredient[], state: RoleFillState, targets: RoleFillTarget[], required: boolean): boolean {
+  function eligibleCount(role: IngredientRole): number {
+    return pantry.filter((c) => c.def.roles.includes(role) && !state.excludeIds.has(c.def.id)).length;
   }
 
-  // Required roles are filled most-constrained-first (fewest eligible candidates remaining),
-  // recomputed after each pick. An ingredient can satisfy more than one role (eggs are both
-  // 'fat' and 'egg'), so filling roles in their declared order can let a generic role's greedy
-  // pick consume the only candidate a later, narrower role needed — a real assignment exists,
-  // the naive fixed-order fill just doesn't find it. Processing the scarcest role first avoids that.
-  const requiredRemaining = [...technique.requiredRoles];
-  while (requiredRemaining.length > 0) {
+  const remaining: { targetIdx: number; role: IngredientRole }[] = [];
+  targets.forEach((t, i) => t.roles.forEach((role) => remaining.push({ targetIdx: i, role })));
+
+  while (remaining.length > 0) {
     let bestIdx = 0;
     let bestCount = Infinity;
-    for (let i = 0; i < requiredRemaining.length; i++) {
-      const count = eligibleCount(requiredRemaining[i]);
+    for (let i = 0; i < remaining.length; i++) {
+      const count = eligibleCount(remaining[i].role);
       if (count < bestCount) {
         bestCount = count;
         bestIdx = i;
       }
     }
-    const role = requiredRemaining.splice(bestIdx, 1)[0];
-    if (!fillRole(role)) return null; // required role unfillable
+    const { targetIdx, role } = remaining.splice(bestIdx, 1)[0];
+    const filled = targets[targetIdx].fillRole(role);
+    if (!filled && required) return false;
   }
+  return true;
+}
 
-  // Optional roles: same most-constrained-first order, but a miss just skips instead of failing.
-  const optionalRemaining = [...technique.optionalRoles];
-  while (optionalRemaining.length > 0) {
-    let bestIdx = 0;
-    let bestCount = Infinity;
-    for (let i = 0; i < optionalRemaining.length; i++) {
-      const count = eligibleCount(optionalRemaining[i]);
-      if (count < bestCount) {
-        bestCount = count;
-        bestIdx = i;
-      }
-    }
-    const role = optionalRemaining.splice(bestIdx, 1)[0];
-    fillRole(role);
-  }
-
+function buildContext(byRoleAssignment: Partial<Record<IngredientRole, PantryIngredient[]>>): TechniqueContext {
   const byRole = (role: IngredientRole) => byRoleAssignment[role] ?? [];
-  const ctx: TechniqueContext = {
+  return {
     protein: byRole('protein')[0]?.def.name,
     proteinFatG: byRole('protein')[0]?.def.macros.fatG,
     fat: byRole('fat')[0]?.def.name,
     acid: byRole('acid')[0]?.def.name,
+    liquid: byRole('liquid')[0]?.def.name,
     aromatics: byRole('aromatic').map((c) => c.def.name),
     starch: byRole('starch')[0]?.def.name,
     vegetables: byRole('vegetable').map((c) => c.def.name),
@@ -228,7 +239,15 @@ function buildRecipeForTechnique(
     eggWhite: byRole('egg-white')[0]?.def.name,
     eggYolk: byRole('egg-yolk')[0]?.def.name,
   };
+}
 
+function finalizeRecipe(
+  technique: TechniqueTemplate,
+  chosen: PantryIngredient[],
+  steps: string[],
+  title: string,
+  requiredRoleCount: number
+): GeneratedRecipe {
   const defs = chosen.map((c) => c.def);
   const balanceScore = averagePairing(defs);
   const wasteScore =
@@ -237,22 +256,69 @@ function buildRecipeForTechnique(
   const healthScore = Math.max(0, Math.min(1, avgHealth * technique.healthModifier));
   const macros = averageMacros(defs);
 
-  const mainName = ctx.protein ?? defs[0]?.name ?? 'Pantry';
-  const title = `${technique.name}: ${mainName}${ctx.vegetables[0] ? ` with ${ctx.vegetables[0]}` : ''}`;
-
   return {
     id: `${technique.id}-${defs.map((d) => d.id).sort().join('-')}`,
     title,
     technique: technique.id,
     ingredientIds: defs.map((d) => d.id),
-    steps: technique.steps(ctx),
-    estimatedMinutes: technique.baseMinutes + technique.minutesPerExtraIngredient * Math.max(0, defs.length - technique.requiredRoles.length),
+    steps,
+    estimatedMinutes: technique.baseMinutes + technique.minutesPerExtraIngredient * Math.max(0, defs.length - requiredRoleCount),
     difficulty: technique.difficulty,
     balanceScore,
     wasteScore,
     healthScore,
     macros,
   };
+}
+
+function buildRecipeForTechnique(
+  technique: TechniqueTemplate,
+  pantry: PantryIngredient[]
+): GeneratedRecipe | null {
+  const state: RoleFillState = { chosen: [], excludeIds: new Set() };
+
+  if (technique.kind === 'flat') {
+    const byRoleAssignment: Partial<Record<IngredientRole, PantryIngredient[]>> = {};
+    const fillRole = makeRoleFiller(pantry, state, byRoleAssignment);
+    const target: RoleFillTarget = { roles: [...technique.requiredRoles], fillRole };
+    if (!fillRolesMRV(pantry, state, [target], true)) return null;
+    fillRolesMRV(pantry, state, [{ roles: [...technique.optionalRoles], fillRole }], false);
+
+    const ctx = buildContext(byRoleAssignment);
+    const mainName = ctx.protein ?? state.chosen[0]?.def.name ?? 'Pantry';
+    const title = `${technique.name}: ${mainName}${ctx.vegetables[0] ? ` with ${ctx.vegetables[0]}` : ''}`;
+    return finalizeRecipe(technique, state.chosen, technique.steps(ctx), title, technique.requiredRoles.length);
+  }
+
+  // Composite: one role-filler per component, all sharing `state` so an ingredient picked
+  // for one component's role is excluded from every other component's search too.
+  const byComponent: Record<string, Partial<Record<IngredientRole, PantryIngredient[]>>> = {};
+  const fillers = technique.components.map((comp) => {
+    byComponent[comp.id] = {};
+    return { comp, fillRole: makeRoleFiller(pantry, state, byComponent[comp.id]) };
+  });
+
+  const requiredTargets = fillers.map(({ comp, fillRole }) => ({ roles: [...comp.requiredRoles], fillRole }));
+  if (!fillRolesMRV(pantry, state, requiredTargets, true)) return null;
+
+  const optionalTargets = fillers.map(({ comp, fillRole }) => ({ roles: [...comp.optionalRoles], fillRole }));
+  fillRolesMRV(pantry, state, optionalTargets, false);
+
+  const componentContexts: Record<string, TechniqueContext> = {};
+  for (const comp of technique.components) {
+    componentContexts[comp.id] = buildContext(byComponent[comp.id]);
+  }
+
+  // Not every component has a protein (a dumpling shell doesn't), so find the first one that
+  // does rather than assuming components[0] — otherwise the headline ingredient can end up
+  // being whatever an unrelated component happened to pick (e.g. the broth's liquid).
+  const mainName =
+    technique.components.map((c) => componentContexts[c.id].protein).find((p) => p != null) ??
+    state.chosen[0]?.def.name ??
+    'Pantry';
+  const title = `${technique.name}: ${mainName}`;
+  const requiredRoleCount = technique.components.reduce((n, c) => n + c.requiredRoles.length, 0);
+  return finalizeRecipe(technique, state.chosen, technique.assemble(componentContexts), title, requiredRoleCount);
 }
 
 /**

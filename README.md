@@ -13,18 +13,22 @@ minimize food waste by prioritizing ingredients close to expiry.
    knowledge base (roles: protein/fat/acid/aromatic/starch/vegetable/dairy/
    spice/sweetener/liquid/flour/leavening/egg, each with a 0-1 simplified
    health heuristic and reference macros per 100g) plus a flavor-pairing
-   graph and 13 technique templates (sauté, roast, braise, stir-fry, salad,
-   soup, grill, bake, steam, poach, deep-fry, blend, cake). The generator
-   fills each technique's required roles with the best-pairing,
-   soonest-expiring pantry items it has, most-constrained role first (a
-   standard constraint-satisfaction ordering — needed once ingredients can
-   satisfy more than one role, e.g. eggs are both `fat` and `egg`, so a
-   generic role's greedy pick can't be allowed to consume the only candidate
-   a narrower role needs). It then scores the result by how connected the
-   ingredients are — the same shape of heuristic a chef uses, encoded as
-   data instead of looked-up recipes. Ingredient ids are type-checked
-   against a master list (`ingredients.ts`), so a typo'd pairing reference
-   fails `tsc` rather than silently degrading the graph.
+   graph and 16 technique templates. The generator fills each technique's
+   required roles with the best-pairing, soonest-expiring pantry items it
+   has, most-constrained role first (a standard constraint-satisfaction
+   ordering — needed once ingredients can satisfy more than one role, e.g.
+   eggs are both `fat` and `egg`, so a generic role's greedy pick can't be
+   allowed to consume the only candidate a narrower role needs). It then
+   scores the result by how connected the ingredients are — the same shape
+   of heuristic a chef uses, encoded as data instead of looked-up recipes.
+   Ingredient ids are type-checked against a master list (`ingredients.ts`),
+   so a typo'd pairing reference fails `tsc` rather than silently degrading
+   the graph.
+
+   Most techniques (sauté, roast, braise, stir-fry, salad, soup, grill,
+   bake, steam, poach, deep-fry, blend, meringue, custard) are **flat**: one
+   set of roles, one pantry, one linear list of steps. Two aren't, because
+   the dish itself isn't flat:
 
    "Connected" isn't just a hand-guessed list anymore. `flavorCompounds.ts`
    carries real GC/MS-derived aroma-compound data for 112 of the ~139
@@ -43,12 +47,22 @@ minimize food waste by prioritizing ingredients close to expiry.
    items this 2010-era, largely-Western dataset doesn't cover) fall back to
    the hand-curated `pairsWith` list — nothing regresses for them.
 
-   Baking is a structurally different problem from savory cooking — a cake
-   isn't "protein+fat+aromatic present," it's flour:sugar:fat:egg in
-   specific ratios, or it won't set. The `cake` technique doesn't scale
-   quantities to what's in the pantry like savory techniques do; it outputs
-   a fixed baker's-percentage batch (~250g flour) using whichever pantry
-   ingredient fills each role.
+   - `cake` is **ratio-based**: baking doesn't tolerate "roughly this much
+     of each role" — a cake is flour:sugar:fat:egg in specific proportions
+     or it won't set. It doesn't scale quantities to what's in the pantry
+     like the flat techniques do; it outputs a fixed baker's-percentage
+     batch (~250g flour) using whichever pantry ingredient fills each role.
+   - `kubbeh` is **composite**: a dish assembled from independently-filled
+     parts (a bulgur shell, a spiced-meat filling, the broth it simmers in)
+     rather than one flat ingredient set. `TechniqueTemplate` is a
+     discriminated union (`kind: 'flat' | 'composite'`) — a composite
+     technique declares named components, each with its own required/
+     optional roles, filled by the same most-constrained-first algorithm
+     but sharing one exclusion set across every component (so the same
+     onion can't become both the filling's aromatic and the broth's), then
+     an `assemble()` function describes how the finished parts combine.
+     This is the general layer for any dish with sub-parts — stuffed
+     vegetables, pies, layered bakes — not a kubbeh-specific hack.
 3. **Byproduct pairing** (`src/lib/rulesEngine/byproducts.ts`) — some
    recipes only use half of an ingredient (a meringue wants egg whites,
    a custard wants yolks). Given whole eggs in the pantry, the generator
