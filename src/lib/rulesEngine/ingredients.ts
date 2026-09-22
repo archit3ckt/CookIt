@@ -45,6 +45,8 @@ const INGREDIENT_ID_LIST = [
   'oyster-sauce', 'sriracha', 'mustard', 'ketchup', 'worcestershire-sauce',
   // Nuts & seeds
   'peanuts', 'almonds', 'cashews', 'walnuts', 'sesame-seeds', 'pine-nuts',
+  // Baking
+  'flour', 'baking-powder', 'baking-soda', 'vanilla-extract',
 ] as const;
 
 type SeedId = (typeof INGREDIENT_ID_LIST)[number];
@@ -75,7 +77,7 @@ const SEED: Record<SeedId, SeedEntry> = {
   mussels: { name: 'Mussels', roles: ['protein'], pairsWith: ['garlic', 'white-wine', 'parsley', 'butter'], defaultShelfLifeDays: 2, healthScore: 0.75, macros: m(172, 24, 7, 4.5, 369) },
   tofu: { name: 'Tofu', roles: ['protein'], pairsWith: ['soy-sauce', 'ginger', 'garlic', 'sesame-oil', 'scallion'], defaultShelfLifeDays: 7, healthScore: 0.8, macros: m(144, 15, 3, 9, 12) },
   tempeh: { name: 'Tempeh', roles: ['protein'], pairsWith: ['soy-sauce', 'ginger', 'garlic', 'lime'], defaultShelfLifeDays: 10, healthScore: 0.85, macros: m(192, 20, 8, 11, 9) },
-  eggs: { name: 'Eggs', roles: ['protein', 'fat'], pairsWith: ['butter', 'cheddar', 'spinach', 'onion', 'tomato'], defaultShelfLifeDays: 21, healthScore: 0.75, macros: m(155, 13, 1.1, 11, 124) },
+  eggs: { name: 'Eggs', roles: ['protein', 'fat', 'egg'], pairsWith: ['butter', 'cheddar', 'spinach', 'onion', 'tomato', 'flour', 'sugar'], defaultShelfLifeDays: 21, healthScore: 0.75, macros: m(155, 13, 1.1, 11, 124) },
   chickpeas: { name: 'Chickpeas', roles: ['protein', 'starch'], pairsWith: ['cumin', 'garlic', 'lemon', 'olive-oil', 'onion'], defaultShelfLifeDays: 365, healthScore: 0.85, macros: m(164, 9, 27, 2.6, 7) },
   'black-beans': { name: 'Black beans', roles: ['protein', 'starch'], pairsWith: ['cumin', 'lime', 'cilantro', 'chili'], defaultShelfLifeDays: 365, healthScore: 0.85, macros: m(132, 8.9, 24, 0.5, 2) },
   'kidney-beans': { name: 'Kidney beans', roles: ['protein', 'starch'], pairsWith: ['cumin', 'tomato', 'onion', 'garlic'], defaultShelfLifeDays: 365, healthScore: 0.85, macros: m(127, 8.7, 23, 0.5, 2) },
@@ -158,7 +160,7 @@ const SEED: Record<SeedId, SeedEntry> = {
   feta: { name: 'Feta', roles: ['dairy'], pairsWith: ['beet', 'cucumber', 'olive-oil', 'mint'], defaultShelfLifeDays: 30, healthScore: 0.5, macros: m(264, 14, 4, 21, 917) },
   mozzarella: { name: 'Mozzarella', roles: ['dairy'], pairsWith: ['tomato', 'basil', 'olive-oil'], defaultShelfLifeDays: 14, healthScore: 0.5, macros: m(280, 28, 3.1, 17, 627) },
   cream: { name: 'Cream', roles: ['dairy', 'fat'], pairsWith: ['garlic', 'onion', 'butter', 'mushroom'], defaultShelfLifeDays: 10, healthScore: 0.3, macros: m(340, 2.1, 2.8, 36, 38) },
-  milk: { name: 'Milk', roles: ['dairy', 'liquid'], pairsWith: ['oats', 'honey', 'cinnamon'], defaultShelfLifeDays: 7, healthScore: 0.6, macros: m(61, 3.2, 4.8, 3.3, 43) },
+  milk: { name: 'Milk', roles: ['dairy', 'liquid'], pairsWith: ['oats', 'honey', 'cinnamon', 'flour'], defaultShelfLifeDays: 7, healthScore: 0.6, macros: m(61, 3.2, 4.8, 3.3, 43) },
   'sour-cream': { name: 'Sour cream', roles: ['dairy'], pairsWith: ['potato', 'scallion', 'lime'], defaultShelfLifeDays: 21, healthScore: 0.35, macros: m(198, 2.4, 4.6, 19, 41) },
 
   // ---- Spices & herbs (dried spice-rack figures for dried spices; fresh-herb figures for fresh ones — per-serving amounts are gram-scale, so absolute contribution to a dish is small despite the concentrated per-100g numbers) ----
@@ -184,7 +186,7 @@ const SEED: Record<SeedId, SeedEntry> = {
   sage: { name: 'Sage', roles: ['spice'], pairsWith: ['turkey', 'pork-chop', 'butternut-squash', 'butter'], defaultShelfLifeDays: 10, healthScore: 0.9, macros: m(315, 10.6, 61, 12.8, 11) },
 
   // ---- Sweeteners ----
-  sugar: { name: 'Sugar', roles: ['sweetener'], pairsWith: ['cinnamon', 'butter'], defaultShelfLifeDays: 730, healthScore: 0.15, macros: m(387, 0, 100, 0, 1) },
+  sugar: { name: 'Sugar', roles: ['sweetener'], pairsWith: ['cinnamon', 'butter', 'flour', 'eggs'], defaultShelfLifeDays: 730, healthScore: 0.15, macros: m(387, 0, 100, 0, 1) },
   honey: { name: 'Honey', roles: ['sweetener'], pairsWith: ['greek-yogurt', 'lemon', 'mustard'], defaultShelfLifeDays: 730, healthScore: 0.35, macros: m(304, 0.3, 82, 0, 4) },
   'maple-syrup': { name: 'Maple syrup', roles: ['sweetener'], pairsWith: ['bacon', 'oats', 'cinnamon'], defaultShelfLifeDays: 365, healthScore: 0.35, macros: m(260, 0, 67, 0.1, 12) },
   'brown-sugar': { name: 'Brown sugar', roles: ['sweetener'], pairsWith: ['cinnamon', 'ginger'], defaultShelfLifeDays: 730, healthScore: 0.15, macros: m(380, 0.1, 98, 0, 28) },
@@ -210,6 +212,12 @@ const SEED: Record<SeedId, SeedEntry> = {
   walnuts: { name: 'Walnuts', roles: ['fat'], pairsWith: ['beet', 'honey', 'feta'], defaultShelfLifeDays: 180, healthScore: 0.85, macros: m(654, 15, 14, 65, 2) },
   'sesame-seeds': { name: 'Sesame seeds', roles: ['fat'], pairsWith: ['sesame-oil', 'soy-sauce', 'broccoli'], defaultShelfLifeDays: 365, healthScore: 0.8, macros: m(573, 18, 23, 50, 11) },
   'pine-nuts': { name: 'Pine nuts', roles: ['fat'], pairsWith: ['basil', 'parmesan', 'olive-oil'], defaultShelfLifeDays: 180, healthScore: 0.8, macros: m(673, 14, 13, 68, 2) },
+
+  // ---- Baking ----
+  flour: { name: 'All-purpose flour', roles: ['flour'], pairsWith: ['sugar', 'butter', 'eggs', 'baking-powder', 'milk', 'vanilla-extract'], defaultShelfLifeDays: 365, healthScore: 0.45, macros: m(364, 10, 76, 1, 2) },
+  'baking-powder': { name: 'Baking powder', roles: ['leavening'], pairsWith: ['flour'], defaultShelfLifeDays: 365, healthScore: 0.5, macros: m(53, 0, 28, 0, 10600) },
+  'baking-soda': { name: 'Baking soda', roles: ['leavening'], pairsWith: ['flour', 'lemon', 'vinegar'], defaultShelfLifeDays: 730, healthScore: 0.5, macros: m(0, 0, 0, 0, 27360) },
+  'vanilla-extract': { name: 'Vanilla extract', roles: ['spice'], pairsWith: ['sugar', 'flour', 'butter', 'eggs'], defaultShelfLifeDays: 1095, healthScore: 0.6, macros: m(288, 0.1, 13, 0.1, 9) },
 };
 
 export const INGREDIENTS: IngredientDef[] = INGREDIENT_ID_LIST.map((id) => ({ id, ...SEED[id] }));

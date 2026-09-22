@@ -99,37 +99,26 @@ function buildRecipeForTechnique(
 ): GeneratedRecipe | null {
   const chosen: PantryIngredient[] = [];
   const excludeIds = new Set<string>();
+  // Tracks which ingredient(s) were picked *for* each role, keyed by role — not re-derived from
+  // `chosen` by scanning role membership. That distinction matters because an ingredient can carry
+  // multiple roles (e.g. butter is both 'fat' and 'dairy'): if it fills the 'fat' slot, a naive
+  // role-membership scan over `chosen` would also match it for a later 'dairy' lookup and shadow
+  // whatever was actually picked to fill 'dairy' (e.g. milk), depending on selection order.
+  const byRoleAssignment: Partial<Record<IngredientRole, PantryIngredient[]>> = {};
 
-  for (const role of technique.requiredRoles) {
-    const isMulti = MULTI_ROLES.includes(role);
-    if (isMulti) {
-      const picks = pickMultiple(
-        pantry,
-        role,
-        chosen.map((c) => c.def),
-        excludeIds,
-        MULTI_ROLE_LIMIT
-      );
-      if (picks.length === 0) return null; // required role unfillable
-      picks.forEach((p) => {
-        chosen.push(p);
-        excludeIds.add(p.def.id);
-      });
-    } else {
-      const pick = pickBest(
-        pantry,
-        role,
-        chosen.map((c) => c.def),
-        excludeIds
-      );
-      if (!pick) return null; // required role unfillable
-      chosen.push(pick);
-      excludeIds.add(pick.def.id);
-    }
+  function assign(role: IngredientRole, picks: PantryIngredient[]) {
+    byRoleAssignment[role] = [...(byRoleAssignment[role] ?? []), ...picks];
+    picks.forEach((p) => {
+      chosen.push(p);
+      excludeIds.add(p.def.id);
+    });
   }
 
-  // Fill optional roles opportunistically if pantry supports them.
-  for (const role of technique.optionalRoles) {
+  function eligibleCount(role: IngredientRole): number {
+    return pantry.filter((c) => c.def.roles.includes(role) && !excludeIds.has(c.def.id)).length;
+  }
+
+  function fillRole(role: IngredientRole): boolean {
     const isMulti = MULTI_ROLES.includes(role);
     if (isMulti) {
       const picks = pickMultiple(
@@ -139,25 +128,58 @@ function buildRecipeForTechnique(
         excludeIds,
         MULTI_ROLE_LIMIT
       );
-      picks.forEach((p) => {
-        chosen.push(p);
-        excludeIds.add(p.def.id);
-      });
-    } else {
-      const pick = pickBest(
-        pantry,
-        role,
-        chosen.map((c) => c.def),
-        excludeIds
-      );
-      if (pick) {
-        chosen.push(pick);
-        excludeIds.add(pick.def.id);
+      if (picks.length === 0) return false;
+      assign(role, picks);
+      return true;
+    }
+    const pick = pickBest(
+      pantry,
+      role,
+      chosen.map((c) => c.def),
+      excludeIds
+    );
+    if (!pick) return false;
+    assign(role, [pick]);
+    return true;
+  }
+
+  // Required roles are filled most-constrained-first (fewest eligible candidates remaining),
+  // recomputed after each pick. An ingredient can satisfy more than one role (eggs are both
+  // 'fat' and 'egg'), so filling roles in their declared order can let a generic role's greedy
+  // pick consume the only candidate a later, narrower role needed — a real assignment exists,
+  // the naive fixed-order fill just doesn't find it. Processing the scarcest role first avoids that.
+  const requiredRemaining = [...technique.requiredRoles];
+  while (requiredRemaining.length > 0) {
+    let bestIdx = 0;
+    let bestCount = Infinity;
+    for (let i = 0; i < requiredRemaining.length; i++) {
+      const count = eligibleCount(requiredRemaining[i]);
+      if (count < bestCount) {
+        bestCount = count;
+        bestIdx = i;
       }
     }
+    const role = requiredRemaining.splice(bestIdx, 1)[0];
+    if (!fillRole(role)) return null; // required role unfillable
   }
 
-  const byRole = (role: IngredientRole) => chosen.filter((c) => c.def.roles.includes(role));
+  // Optional roles: same most-constrained-first order, but a miss just skips instead of failing.
+  const optionalRemaining = [...technique.optionalRoles];
+  while (optionalRemaining.length > 0) {
+    let bestIdx = 0;
+    let bestCount = Infinity;
+    for (let i = 0; i < optionalRemaining.length; i++) {
+      const count = eligibleCount(optionalRemaining[i]);
+      if (count < bestCount) {
+        bestCount = count;
+        bestIdx = i;
+      }
+    }
+    const role = optionalRemaining.splice(bestIdx, 1)[0];
+    fillRole(role);
+  }
+
+  const byRole = (role: IngredientRole) => byRoleAssignment[role] ?? [];
   const ctx: TechniqueContext = {
     protein: byRole('protein')[0]?.def.name,
     fat: byRole('fat')[0]?.def.name,
@@ -167,6 +189,10 @@ function buildRecipeForTechnique(
     vegetables: byRole('vegetable').map((c) => c.def.name),
     dairy: byRole('dairy')[0]?.def.name,
     spices: byRole('spice').map((c) => c.def.name),
+    sweetener: byRole('sweetener')[0]?.def.name,
+    flour: byRole('flour')[0]?.def.name,
+    leavening: byRole('leavening')[0]?.def.name,
+    egg: byRole('egg')[0]?.def.name,
   };
 
   const defs = chosen.map((c) => c.def);

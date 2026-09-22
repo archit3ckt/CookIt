@@ -9,19 +9,30 @@ minimize food waste by prioritizing ingredients close to expiry.
 1. **Intake** — add pantry items manually, scan a barcode (looked up via Open
    Food Facts), or photograph a receipt (OCR'd via Google Cloud Vision and
    parsed into line items).
-2. **Rules engine** (`src/lib/rulesEngine`) — a hand-curated ~130-ingredient
+2. **Rules engine** (`src/lib/rulesEngine`) — a hand-curated ~135-ingredient
    knowledge base (roles: protein/fat/acid/aromatic/starch/vegetable/dairy/
-   spice/sweetener/liquid, each with a 0-1 simplified health heuristic and
-   reference macros per 100g) plus a flavor-pairing graph and 12 technique
-   templates (sauté, roast, braise, stir-fry, salad, soup, grill, bake,
-   steam, poach, deep-fry, blend). The generator fills each technique's
-   required roles with the best-pairing, soonest-expiring pantry items it
-   has, then scores the result by how connected the ingredients are (does
-   everything tie in via a shared aromatic/fat/acid?) — the same shape of
-   heuristic a chef uses, encoded as data instead of looked-up recipes.
-   Ingredient ids are type-checked against a master list (`ingredients.ts`),
-   so a typo'd pairing reference fails `tsc` rather than silently degrading
-   the graph.
+   spice/sweetener/liquid/flour/leavening/egg, each with a 0-1 simplified
+   health heuristic and reference macros per 100g) plus a flavor-pairing
+   graph and 13 technique templates (sauté, roast, braise, stir-fry, salad,
+   soup, grill, bake, steam, poach, deep-fry, blend, cake). The generator
+   fills each technique's required roles with the best-pairing,
+   soonest-expiring pantry items it has, most-constrained role first (a
+   standard constraint-satisfaction ordering — needed once ingredients can
+   satisfy more than one role, e.g. eggs are both `fat` and `egg`, so a
+   generic role's greedy pick can't be allowed to consume the only candidate
+   a narrower role needs). It then scores the result by how connected the
+   ingredients are (does everything tie in via a shared aromatic/fat/acid?)
+   — the same shape of heuristic a chef uses, encoded as data instead of
+   looked-up recipes. Ingredient ids are type-checked against a master list
+   (`ingredients.ts`), so a typo'd pairing reference fails `tsc` rather than
+   silently degrading the graph.
+
+   Baking is a structurally different problem from savory cooking — a cake
+   isn't "protein+fat+aromatic present," it's flour:sugar:fat:egg in
+   specific ratios, or it won't set. The `cake` technique doesn't scale
+   quantities to what's in the pantry like savory techniques do; it outputs
+   a fixed baker's-percentage batch (~250g flour) using whichever pantry
+   ingredient fills each role.
 3. **Ranking** — sort suggestions by waste reduction (uses what's expiring
    soonest), time, ease, health, or protein content; filter by max cook time
    or minimum health score.

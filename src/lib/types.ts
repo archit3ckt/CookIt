@@ -8,7 +8,11 @@ export type IngredientRole =
   | 'dairy'
   | 'spice'
   | 'sweetener'
-  | 'liquid';
+  | 'liquid'
+  | 'flour'
+  | 'leavening'
+  /** Eggs specifically, distinct from the generic 'protein' role — baking needs eggs, not just any protein. */
+  | 'egg';
 
 /** Macronutrients per 100g of the ingredient as typically eaten (cooked meat/veg, dried spices as sold, etc). */
 export interface Macros {
@@ -59,7 +63,8 @@ export type Technique =
   | 'steam'
   | 'poach'
   | 'deep-fry'
-  | 'blend';
+  | 'blend'
+  | 'cake';
 
 export interface TechniqueTemplate {
   id: Technique;
@@ -85,6 +90,10 @@ export interface TechniqueContext {
   vegetables: string[];
   dairy?: string;
   spices: string[];
+  sweetener?: string;
+  flour?: string;
+  leavening?: string;
+  egg?: string;
 }
 
 export interface GeneratedRecipe {

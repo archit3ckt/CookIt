@@ -190,4 +190,25 @@ export const TECHNIQUES: TechniqueTemplate[] = [
       'Chill or gently warm through, then serve.',
     ],
   },
+  {
+    id: 'cake',
+    name: 'Butter cake (creaming method)',
+    requiredRoles: ['flour', 'sweetener', 'fat', 'egg', 'leavening'],
+    optionalRoles: ['dairy', 'spice'],
+    baseMinutes: 60,
+    minutesPerExtraIngredient: 2,
+    difficulty: 2,
+    healthModifier: 0.6,
+    // Unlike savory techniques, baking doesn't tolerate "roughly this much of each role" —
+    // ratios below are a standard baker's-percentage butter cake (~250g flour batch),
+    // scaled to whichever pantry ingredient fills each role, not to how much of it is on hand.
+    steps: (ctx) => [
+      `Preheat oven to 350°F (175°C). Grease and flour a cake pan.`,
+      `Whisk 250g (2 cups) ${ctx.flour ?? 'flour'} with 10g (about 2 tsp) ${ctx.leavening ?? 'baking powder'} and a pinch of salt.`,
+      `Cream 125g ${ctx.fat ?? 'butter'} with 200g ${ctx.sweetener ?? 'sugar'} until light and fluffy, about 3 minutes.`,
+      `Beat in 2 ${ctx.egg ?? 'eggs'}, one at a time${ctx.spices.length ? `, then stir in ${ctx.spices.join(', ')}` : ''}.`,
+      `Alternate folding in the flour mixture and 65ml ${ctx.dairy ?? 'milk'}, starting and ending with flour, until just combined — do not overmix.`,
+      'Pour into the pan and bake until a toothpick comes out clean, 25-35 min. Cool before removing from the pan.',
+    ],
+  },
 ];
