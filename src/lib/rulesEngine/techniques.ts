@@ -312,4 +312,51 @@ export const TECHNIQUES: TechniqueTemplate[] = [
       ];
     },
   },
+  {
+    id: 'shawarma',
+    kind: 'composite',
+    name: 'Shawarma wrap',
+    baseMinutes: 40,
+    minutesPerExtraIngredient: 2,
+    difficulty: 2,
+    healthModifier: 0.75,
+    // A different composite shape than kubbeh: kubbeh's parts are combined raw and cooked
+    // together in the broth; here each part is finished on its own — meat marinated and
+    // seared, bread warmed, toppings prepped — then assembled with no further cooking at
+    // all. Same underlying mechanism (independent components, shared exclusion), different
+    // assemble() narrative — this is exactly what validates the layer is general and not
+    // kubbeh-specific.
+    components: [
+      {
+        id: 'protein',
+        label: 'Protein',
+        requiredRoles: ['protein'],
+        optionalRoles: ['fat', 'spice', 'acid'],
+      },
+      {
+        id: 'wrap',
+        label: 'Wrap',
+        requiredRoles: ['starch'],
+        optionalRoles: [],
+      },
+      {
+        id: 'toppings',
+        label: 'Toppings',
+        requiredRoles: ['vegetable'],
+        optionalRoles: ['fat', 'dairy', 'acid', 'spice'],
+      },
+    ],
+    assemble: (ctx) => {
+      const protein = ctx.protein;
+      const wrap = ctx.wrap;
+      const toppings = ctx.toppings;
+      return [
+        `Marinate ${protein.protein ?? 'the protein'} in ${protein.fat ?? 'oil'}${protein.acid ? `, ${protein.acid},` : ''} and ${protein.spices.join(', ') || 'spices'} for at least 20 min.`,
+        `Sear over high heat in a hot pan${oilAdjustmentNote(protein.proteinFatG)}, uncovered, until charred at the edges and cooked through, then slice thin.`,
+        `Warm ${wrap.starch ?? 'the wrap'} directly in a dry pan or over a flame until soft and pliable.`,
+        `Spread ${toppings.fat ?? toppings.dairy ?? 'sauce'} inside the wrap, then layer in the sliced protein and ${toppings.vegetables.join(', ') || 'vegetables'}${toppings.acid ? `, finished with ${toppings.acid}` : ''}.`,
+        'Roll tightly and serve right away, before the wrap softens too much to hold its shape.',
+      ];
+    },
+  },
 ];

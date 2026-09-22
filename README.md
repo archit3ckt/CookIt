@@ -63,6 +63,11 @@ minimize food waste by prioritizing ingredients close to expiry.
      an `assemble()` function describes how the finished parts combine.
      This is the general layer for any dish with sub-parts — stuffed
      vegetables, pies, layered bakes — not a kubbeh-specific hack.
+     `shawarma` (protein marinated/seared/sliced + wrap warmed + toppings
+     prepped, then assembled with no further cooking) validates that: a
+     structurally different composite narrative than kubbeh's "combine raw,
+     cook together," built with zero changes to the generator itself —
+     just a new components/assemble() declaration.
 3. **Byproduct pairing** (`src/lib/rulesEngine/byproducts.ts`) — some
    recipes only use half of an ingredient (a meringue wants egg whites,
    a custard wants yolks). Given whole eggs in the pantry, the generator

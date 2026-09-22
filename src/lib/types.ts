@@ -70,7 +70,8 @@ export type Technique =
   | 'cake'
   | 'meringue'
   | 'custard'
-  | 'kubbeh';
+  | 'kubbeh'
+  | 'shawarma';
 
 /**
  * One part of a composite dish (a dumpling shell, its filling, the broth it
