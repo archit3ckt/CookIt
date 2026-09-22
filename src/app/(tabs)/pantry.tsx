@@ -1,9 +1,10 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Link } from 'expo-router';
 import * as Crypto from 'expo-crypto';
 import { usePantry } from '../../lib/db/usePantry';
 import { AddPantryItemForm } from '../../components/AddPantryItemForm';
+import { SearchBar } from '../../components/SearchBar';
 import { PantryItem } from '../../lib/types';
 
 function daysLeft(expiresOn: string | null): number | null {
@@ -22,6 +23,13 @@ function ExpiryBadge({ expiresOn }: { expiresOn: string | null }) {
 
 export default function PantryScreen() {
   const { items, loading, addItem, removeItem } = usePantry();
+  const [search, setSearch] = useState('');
+
+  const visibleItems = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((i) => i.label.toLowerCase().includes(q));
+  }, [items, search]);
 
   const handleAdd = useCallback(
     async ({
@@ -63,12 +71,20 @@ export default function PantryScreen() {
 
       <AddPantryItemForm onAdd={handleAdd} />
 
+      <View style={styles.searchWrap}>
+        <SearchBar value={search} onChangeText={setSearch} placeholder="Search pantry items" />
+      </View>
+
       <FlatList
-        data={items}
+        data={visibleItems}
         keyExtractor={(i) => i.id}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
-          !loading ? <Text style={styles.empty}>Your pantry is empty. Add or scan something.</Text> : null
+          !loading ? (
+            <Text style={styles.empty}>
+              {search.trim() ? 'No pantry items match your search.' : 'Your pantry is empty. Add or scan something.'}
+            </Text>
+          ) : null
         }
         renderItem={({ item }) => (
           <View style={styles.row}>
@@ -91,8 +107,9 @@ export default function PantryScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   actions: { flexDirection: 'row', gap: 8, padding: 12 },
-  actionButton: { flex: 1, backgroundColor: '#1565c0', padding: 12, borderRadius: 10, alignItems: 'center' },
+  actionButton: { flex: 1, backgroundColor: '#1565c0', padding: 12, borderRadius: 20, alignItems: 'center' },
   actionButtonText: { color: 'white', fontWeight: '600' },
+  searchWrap: { paddingHorizontal: 12, paddingBottom: 8 },
   list: { paddingHorizontal: 12, paddingBottom: 24 },
   empty: { textAlign: 'center', color: '#888', marginTop: 40 },
   row: {

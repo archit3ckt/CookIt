@@ -3,12 +3,17 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useMadeRecipes } from '../../lib/db/useMadeRecipes';
 import { healthLabel } from '../../lib/rulesEngine/rank';
+import { SearchBar } from '../../components/SearchBar';
 
 export default function DiscoveredScreen() {
   const { items, loading, setLiked } = useMadeRecipes();
   const [likedOnly, setLikedOnly] = useState(false);
+  const [search, setSearch] = useState('');
 
-  const visible = useMemo(() => (likedOnly ? items.filter((r) => r.liked) : items), [items, likedOnly]);
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return items.filter((r) => (!likedOnly || r.liked) && (!q || r.title.toLowerCase().includes(q)));
+  }, [items, likedOnly, search]);
 
   if (loading) return null;
 
@@ -29,15 +34,19 @@ export default function DiscoveredScreen() {
         </Pressable>
       </View>
 
+      <SearchBar value={search} onChangeText={setSearch} placeholder="Search made dishes" />
+
       <FlatList
         data={visible}
         keyExtractor={(r) => r.id}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <Text style={styles.empty}>
-            {likedOnly
-              ? "You haven't liked any made dishes yet."
-              : "Nothing here yet — mark a suggested recipe as made once you've cooked it."}
+            {search.trim()
+              ? 'No made dishes match your search.'
+              : likedOnly
+                ? "You haven't liked any made dishes yet."
+                : "Nothing here yet — mark a suggested recipe as made once you've cooked it."}
           </Text>
         }
         renderItem={({ item }) => (

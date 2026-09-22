@@ -82,11 +82,11 @@ export function AddPantryItemForm({ onAdd }: Props) {
 const styles = StyleSheet.create({
   container: { padding: 12, gap: 8 },
   label: { fontWeight: '600', fontSize: 14, color: '#333' },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10 },
+  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 24, padding: 10 },
   smallInput: { flex: 1 },
   row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  suggestions: { maxHeight: 180, borderWidth: 1, borderColor: '#eee', borderRadius: 8 },
+  suggestions: { maxHeight: 180, borderWidth: 1, borderColor: '#eee', borderRadius: 14 },
   suggestionRow: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-  addButton: { backgroundColor: '#2e7d32', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
+  addButton: { backgroundColor: '#2e7d32', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20 },
   addButtonText: { color: 'white', fontWeight: '600' },
 });

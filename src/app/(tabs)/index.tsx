@@ -5,6 +5,7 @@ import { usePantry } from '../../lib/db/usePantry';
 import { generateRecipes } from '../../lib/rulesEngine/generate';
 import { filterAndSort, healthLabel } from '../../lib/rulesEngine/rank';
 import { cacheRecipes } from '../../lib/recipeCache';
+import { SearchBar } from '../../components/SearchBar';
 import { RecipeSort } from '../../lib/types';
 
 const SORTS: { key: RecipeSort; label: string }[] = [
@@ -26,12 +27,19 @@ export default function SuggestionsScreen() {
   const [sort, setSort] = useState<RecipeSort>('waste');
   const [maxMinutes, setMaxMinutes] = useState<number | undefined>(undefined);
   const [minHealth, setMinHealth] = useState<number | undefined>(undefined);
+  const [search, setSearch] = useState('');
 
   const recipes = useMemo(() => {
     const generated = generateRecipes(items);
     cacheRecipes(generated);
     return filterAndSort(generated, sort, { maxMinutes, minHealth });
   }, [items, sort, maxMinutes, minHealth]);
+
+  const visibleRecipes = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return recipes;
+    return recipes.filter((r) => r.title.toLowerCase().includes(q));
+  }, [recipes, search]);
 
   if (loading) return null;
 
@@ -73,14 +81,17 @@ export default function SuggestionsScreen() {
         ))}
       </View>
 
+      <SearchBar value={search} onChangeText={setSearch} placeholder="Search suggested recipes" />
+
       <FlatList
-        data={recipes}
+        data={visibleRecipes}
         keyExtractor={(r) => r.id}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <Text style={styles.empty}>
-            Not enough pantry items to build a balanced recipe yet. Add a protein, a fat, and an aromatic to get
-            started.
+            {search.trim()
+              ? 'No suggested recipes match your search.'
+              : 'Not enough pantry items to build a balanced recipe yet. Add a protein, a fat, and an aromatic to get started.'}
           </Text>
         }
         renderItem={({ item }) => (

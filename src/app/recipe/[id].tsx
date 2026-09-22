@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   madeButton: {
     backgroundColor: '#2e7d32',
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 24,
     alignItems: 'center',
     marginBottom: 12,
   },
