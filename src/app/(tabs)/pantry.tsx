@@ -4,7 +4,6 @@ import { Link } from 'expo-router';
 import * as Crypto from 'expo-crypto';
 import { usePantry } from '../../lib/db/usePantry';
 import { AddPantryItemForm } from '../../components/AddPantryItemForm';
-import { SearchBar } from '../../components/SearchBar';
 import { PantryItem } from '../../lib/types';
 
 function daysLeft(expiresOn: string | null): number | null {
@@ -61,21 +60,10 @@ export default function PantryScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.actions}>
-        <Link href="/scan" asChild>
-          <Pressable style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>📷 Scan receipt / barcode</Text>
-          </Pressable>
-        </Link>
-      </View>
-
-      <AddPantryItemForm onAdd={handleAdd} />
-
-      <View style={styles.searchWrap}>
-        <SearchBar value={search} onChangeText={setSearch} placeholder="Search pantry items" />
-      </View>
+      <AddPantryItemForm onAdd={handleAdd} onQueryChange={setSearch} />
 
       <FlatList
+        style={styles.listFlex}
         data={visibleItems}
         keyExtractor={(i) => i.id}
         contentContainerStyle={styles.list}
@@ -100,6 +88,14 @@ export default function PantryScreen() {
           </View>
         )}
       />
+
+      <View style={styles.actions}>
+        <Link href="/scan" asChild>
+          <Pressable style={styles.actionButton}>
+            <Text style={styles.actionButtonText}>📷 Scan receipt / barcode</Text>
+          </Pressable>
+        </Link>
+      </View>
     </View>
   );
 }
@@ -109,7 +105,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 8, padding: 12 },
   actionButton: { flex: 1, backgroundColor: '#1565c0', padding: 12, borderRadius: 20, alignItems: 'center' },
   actionButtonText: { color: 'white', fontWeight: '600' },
-  searchWrap: { paddingHorizontal: 12, paddingBottom: 8 },
+  listFlex: { flex: 1 },
   list: { paddingHorizontal: 12, paddingBottom: 24 },
   empty: { textAlign: 'center', color: '#888', marginTop: 40 },
   row: {

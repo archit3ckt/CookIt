@@ -1,13 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { INGREDIENTS } from '../lib/rulesEngine/ingredients';
 import { IngredientDef, Unit } from '../lib/types';
 
 interface Props {
   onAdd: (args: { ingredient: IngredientDef; quantity: number; unit: Unit; daysUntilExpiry: number }) => void;
+  /** Fires with the box's current display text, so a parent can reuse this one input to also filter its own list instead of showing a second search bar. */
+  onQueryChange?: (query: string) => void;
 }
 
-export function AddPantryItemForm({ onAdd }: Props) {
+export function AddPantryItemForm({ onAdd, onQueryChange }: Props) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<IngredientDef | null>(null);
   const [quantity, setQuantity] = useState('1');
@@ -18,6 +20,10 @@ export function AddPantryItemForm({ onAdd }: Props) {
     const q = query.toLowerCase();
     return INGREDIENTS.filter((i) => i.name.toLowerCase().includes(q)).slice(0, 6);
   }, [query]);
+
+  useEffect(() => {
+    onQueryChange?.(selected ? selected.name : query);
+  }, [query, selected, onQueryChange]);
 
   const submit = () => {
     if (!selected) return;

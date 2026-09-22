@@ -47,14 +47,6 @@ export default function RecipeDetailScreen() {
         {recipe.estimatedMinutes} min · {'★'.repeat(recipe.difficulty)} difficulty · {healthLabel(recipe.healthScore)}
       </Text>
 
-      <Pressable
-        style={[styles.madeButton, marked && styles.madeButtonDone]}
-        disabled={marked}
-        onPress={handleMarkAsMade}
-      >
-        <Text style={styles.madeButtonText}>{marked ? '✓ Marked as made' : '✓ Mark as made'}</Text>
-      </Pressable>
-
       {recipe.pairedRecipeNote && (
         <Pressable
           style={styles.pairingCard}
@@ -89,6 +81,14 @@ export default function RecipeDetailScreen() {
           {idx + 1}. {step}
         </Text>
       ))}
+
+      <Pressable
+        style={[styles.madeButton, marked && styles.madeButtonDone]}
+        disabled={marked}
+        onPress={handleMarkAsMade}
+      >
+        <Text style={styles.madeButtonText}>{marked ? '✓ Marked as made' : '✓ Mark as made'}</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 24,
     alignItems: 'center',
-    marginBottom: 12,
+    marginTop: 20,
   },
   madeButtonDone: { backgroundColor: '#9e9e9e' },
   madeButtonText: { color: '#fff', fontWeight: '600' },
