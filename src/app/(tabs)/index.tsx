@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { usePantry } from '../lib/db/usePantry';
-import { generateRecipes } from '../lib/rulesEngine/generate';
-import { filterAndSort, healthLabel } from '../lib/rulesEngine/rank';
-import { cacheRecipes } from '../lib/recipeCache';
-import { RecipeSort } from '../lib/types';
+import { usePantry } from '../../lib/db/usePantry';
+import { generateRecipes } from '../../lib/rulesEngine/generate';
+import { filterAndSort, healthLabel } from '../../lib/rulesEngine/rank';
+import { cacheRecipes } from '../../lib/recipeCache';
+import { RecipeSort } from '../../lib/types';
 
 const SORTS: { key: RecipeSort; label: string }[] = [
   { key: 'waste', label: 'Reduce waste' },
@@ -21,7 +21,7 @@ const HEALTH_FILTERS: { key: string; label: string; minHealth: number | undefine
   { key: 'high', label: 'Very healthy', minHealth: 0.75 },
 ];
 
-export default function RecipesScreen() {
+export default function SuggestionsScreen() {
   const { items, loading } = usePantry();
   const [sort, setSort] = useState<RecipeSort>('waste');
   const [maxMinutes, setMaxMinutes] = useState<number | undefined>(undefined);

@@ -2,9 +2,9 @@ import { useCallback } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Link } from 'expo-router';
 import * as Crypto from 'expo-crypto';
-import { usePantry } from '../lib/db/usePantry';
-import { AddPantryItemForm } from '../components/AddPantryItemForm';
-import { PantryItem } from '../lib/types';
+import { usePantry } from '../../lib/db/usePantry';
+import { AddPantryItemForm } from '../../components/AddPantryItemForm';
+import { PantryItem } from '../../lib/types';
 
 function daysLeft(expiresOn: string | null): number | null {
   if (!expiresOn) return null;
@@ -59,11 +59,6 @@ export default function PantryScreen() {
             <Text style={styles.actionButtonText}>📷 Scan receipt / barcode</Text>
           </Pressable>
         </Link>
-        <Link href="/recipes" asChild>
-          <Pressable style={StyleSheet.flatten([styles.actionButton, styles.recipesButton])}>
-            <Text style={styles.actionButtonText}>🍳 Suggest recipes</Text>
-          </Pressable>
-        </Link>
       </View>
 
       <AddPantryItemForm onAdd={handleAdd} />
@@ -97,7 +92,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   actions: { flexDirection: 'row', gap: 8, padding: 12 },
   actionButton: { flex: 1, backgroundColor: '#1565c0', padding: 12, borderRadius: 10, alignItems: 'center' },
-  recipesButton: { backgroundColor: '#ef6c00' },
   actionButtonText: { color: 'white', fontWeight: '600' },
   list: { paddingHorizontal: 12, paddingBottom: 24 },
   empty: { textAlign: 'center', color: '#888', marginTop: 40 },

@@ -1,13 +1,18 @@
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as Crypto from 'expo-crypto';
 import { getCachedRecipe } from '../../lib/recipeCache';
 import { INGREDIENTS_BY_ID } from '../../lib/rulesEngine/ingredients';
 import { healthLabel } from '../../lib/rulesEngine/rank';
+import { useMadeRecipes } from '../../lib/db/useMadeRecipes';
 
 export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const recipe = id ? getCachedRecipe(id) : undefined;
   const pairedRecipe = recipe?.pairedRecipeId ? getCachedRecipe(recipe.pairedRecipeId) : undefined;
+  const { addMade } = useMadeRecipes();
+  const [marked, setMarked] = useState(false);
 
   if (!recipe) {
     return (
@@ -17,12 +22,38 @@ export default function RecipeDetailScreen() {
     );
   }
 
+  const handleMarkAsMade = async () => {
+    await addMade({
+      id: Crypto.randomUUID(),
+      recipeId: recipe.id,
+      title: recipe.title,
+      technique: recipe.technique,
+      ingredientIds: recipe.ingredientIds,
+      steps: recipe.steps,
+      estimatedMinutes: recipe.estimatedMinutes,
+      difficulty: recipe.difficulty,
+      healthScore: recipe.healthScore,
+      macros: recipe.macros,
+      madeOn: new Date().toISOString().slice(0, 10),
+      liked: false,
+    });
+    setMarked(true);
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>{recipe.title}</Text>
       <Text style={styles.meta}>
         {recipe.estimatedMinutes} min · {'★'.repeat(recipe.difficulty)} difficulty · {healthLabel(recipe.healthScore)}
       </Text>
+
+      <Pressable
+        style={[styles.madeButton, marked && styles.madeButtonDone]}
+        disabled={marked}
+        onPress={handleMarkAsMade}
+      >
+        <Text style={styles.madeButtonText}>{marked ? '✓ Marked as made' : '✓ Mark as made'}</Text>
+      </Pressable>
 
       {recipe.pairedRecipeNote && (
         <Pressable
@@ -68,6 +99,15 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   title: { fontSize: 20, fontWeight: '700' },
   meta: { color: '#666', marginBottom: 12 },
+  madeButton: {
+    backgroundColor: '#2e7d32',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  madeButtonDone: { backgroundColor: '#9e9e9e' },
+  madeButtonText: { color: '#fff', fontWeight: '600' },
   pairingCard: {
     backgroundColor: '#fff8e1',
     borderColor: '#f0d878',

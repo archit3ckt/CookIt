@@ -164,3 +164,19 @@ export interface GeneratedRecipe {
 }
 
 export type RecipeSort = 'waste' | 'time' | 'ease' | 'health' | 'protein';
+
+/** A snapshot of a GeneratedRecipe taken at the moment the user marked it as made — recipes are derived from the pantry, not stored, so a snapshot is the only way a log entry survives the pantry changing later. */
+export interface MadeRecipe {
+  id: string;
+  recipeId: string;
+  title: string;
+  technique: Technique;
+  ingredientIds: string[];
+  steps: string[];
+  estimatedMinutes: number;
+  difficulty: 1 | 2 | 3;
+  healthScore: number;
+  macros: Macros;
+  madeOn: string; // ISO date
+  liked: boolean;
+}

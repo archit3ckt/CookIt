@@ -8,10 +8,10 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <SQLiteProvider databaseName="cookit.db" onInit={migrateDbIfNeeded}>
         <Stack screenOptions={{ headerTitleAlign: 'center' }}>
-          <Stack.Screen name="index" options={{ title: 'Pantry' }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="scan" options={{ title: 'Scan' }} />
-          <Stack.Screen name="recipes" options={{ title: 'Recipes' }} />
           <Stack.Screen name="recipe/[id]" options={{ title: 'Recipe' }} />
+          <Stack.Screen name="made/[id]" options={{ title: 'Made Recipe' }} />
         </Stack>
       </SQLiteProvider>
     </SafeAreaProvider>
