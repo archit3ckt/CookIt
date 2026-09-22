@@ -15,7 +15,11 @@ export type IngredientRole =
   | 'egg'
   /** Separated egg white/yolk — distinct from 'egg' since whole eggs aren't a substitute in a meringue or custard. */
   | 'egg-white'
-  | 'egg-yolk';
+  | 'egg-yolk'
+  /** A ready-to-warm-and-roll flatbread — distinct from the generic 'starch' role so a wrap-style dish can't end up trying to roll a potato or a bowl of rice. */
+  | 'flatbread'
+  /** A cracked grain that becomes a kneadable dough when soaked — distinct from 'starch' so a shell/dumpling dish can't end up trying to knead rice or pasta into a shell. */
+  | 'dough-grain';
 
 /** Macronutrients per 100g of the ingredient as typically eaten (cooked meat/veg, dried spices as sold, etc). */
 export interface Macros {
@@ -143,6 +147,8 @@ export interface TechniqueContext {
   egg?: string;
   eggWhite?: string;
   eggYolk?: string;
+  flatbread?: string;
+  doughGrain?: string;
 }
 
 /** One chosen ingredient's typical amount for a single serving of the dish. */

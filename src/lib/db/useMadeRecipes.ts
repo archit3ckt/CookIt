@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
+import { useFocusEffect } from 'expo-router';
 import { MadeRecipe } from '../types';
 import { insertMadeRecipe, listMadeRecipes, setMadeRecipeLiked } from './madeRecipes';
 
@@ -20,6 +21,15 @@ export function useMadeRecipes() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
+
+  // Same cross-screen staleness fix as usePantry: e.g. marking a recipe as
+  // made on the recipe detail screen won't reach the Discovered tab's own
+  // copy of this hook's state without refetching on focus.
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
 
   const addMade = useCallback(
     async (recipe: MadeRecipe) => {

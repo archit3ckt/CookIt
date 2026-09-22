@@ -35,6 +35,8 @@ const SEED_PANTRY: SeedPantryItem[] = [
   { ingredientId: 'rice', label: 'Rice', quantity: 1000, daysUntilExpiry: null },
   { ingredientId: 'mushroom', label: 'Mushroom', quantity: 250, daysUntilExpiry: 3 },
   { ingredientId: 'red-wine', label: 'Red Wine', quantity: 750, daysUntilExpiry: 60 },
+  { ingredientId: 'tortilla', label: 'Tortilla', quantity: 6, daysUntilExpiry: 10 },
+  { ingredientId: 'bulgur', label: 'Bulgur', quantity: 300, daysUntilExpiry: 300 },
   { ingredientId: 'beef-steak', label: 'Beef Steak', quantity: 2, daysUntilExpiry: 4 },
 ];
 

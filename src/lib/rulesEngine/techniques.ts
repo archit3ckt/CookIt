@@ -283,7 +283,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
       {
         id: 'shell',
         label: 'Shell',
-        requiredRoles: ['starch'],
+        requiredRoles: ['dough-grain'],
         optionalRoles: [],
       },
       {
@@ -304,9 +304,9 @@ export const TECHNIQUES: TechniqueTemplate[] = [
       const filling = ctx.filling;
       const broth = ctx.broth;
       return [
-        `Soak ${shell.starch ?? 'bulgur'} in warm water until softened, then squeeze out excess water and knead into a smooth, pliable dough.`,
+        `Soak ${shell.doughGrain ?? 'bulgur'} in warm water until softened, then squeeze out excess water and knead into a smooth, pliable dough.`,
         `Cook ${filling.aromatics.join(', ') || 'aromatics'} with ${filling.protein ?? 'the filling protein'}${filling.fat ? ` and ${filling.fat}` : ''} until browned, seasoning with ${filling.spices.join(', ') || 'spices'}.`,
-        `Flatten a portion of the ${shell.starch ?? 'bulgur'} dough in your palm, spoon in filling, and fold the edges up and seal into a ball — patch any cracks or the filling will leak out in the broth.`,
+        `Flatten a portion of the ${shell.doughGrain ?? 'bulgur'} dough in your palm, spoon in filling, and fold the edges up and seal into a ball — patch any cracks or the filling will leak out in the broth.`,
         `Bring ${broth.liquid ?? 'broth'} to a simmer with ${broth.aromatics.join(', ') || 'aromatics'}${broth.acid ? ` and ${broth.acid}` : ''}.`,
         'Gently lower the dumplings into the simmering broth, uncovered so you can watch them, and cook until the shells are set and cooked through, 20-30 min.',
       ];
@@ -336,7 +336,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
       {
         id: 'wrap',
         label: 'Wrap',
-        requiredRoles: ['starch'],
+        requiredRoles: ['flatbread'],
         optionalRoles: [],
       },
       {
@@ -353,7 +353,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
       return [
         `Marinate ${protein.protein ?? 'the protein'} in ${protein.fat ?? 'oil'}${protein.acid ? `, ${protein.acid},` : ''} and ${protein.spices.join(', ') || 'spices'} for at least 20 min.`,
         `Sear over high heat in a hot pan${oilAdjustmentNote(protein.proteinFatG)}, uncovered, until charred at the edges and cooked through, then slice thin.`,
-        `Warm ${wrap.starch ?? 'the wrap'} directly in a dry pan or over a flame until soft and pliable.`,
+        `Warm ${wrap.flatbread ?? 'the wrap'} directly in a dry pan or over a flame until soft and pliable.`,
         `Spread ${toppings.fat ?? toppings.dairy ?? 'sauce'} inside the wrap, then layer in the sliced protein and ${toppings.vegetables.join(', ') || 'vegetables'}${toppings.acid ? `, finished with ${toppings.acid}` : ''}.`,
         'Roll tightly and serve right away, before the wrap softens too much to hold its shape.',
       ];

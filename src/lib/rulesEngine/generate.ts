@@ -251,6 +251,8 @@ function buildContext(byRoleAssignment: Partial<Record<IngredientRole, PantryIng
     egg: byRole('egg')[0]?.def.name,
     eggWhite: byRole('egg-white')[0]?.def.name,
     eggYolk: byRole('egg-yolk')[0]?.def.name,
+    flatbread: byRole('flatbread')[0]?.def.name,
+    doughGrain: byRole('dough-grain')[0]?.def.name,
   };
 }
 
