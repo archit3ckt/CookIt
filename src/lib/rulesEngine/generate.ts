@@ -1,4 +1,4 @@
-import { GeneratedRecipe, IngredientDef, IngredientRole, PantryItem, TechniqueContext, TechniqueTemplate } from '../types';
+import { GeneratedRecipe, IngredientDef, IngredientRole, Macros, PantryItem, TechniqueContext, TechniqueTemplate } from '../types';
 import { INGREDIENTS_BY_ID } from './ingredients';
 import { TECHNIQUES } from './techniques';
 
@@ -28,6 +28,18 @@ function averagePairing(defs: IngredientDef[]): number {
   if (defs.length < 2) return 0.5; // neutral score, nothing to clash with
   const connected = defs.filter((d, i) => defs.some((other, j) => j !== i && pairingScore(d, other) > 0)).length;
   return connected / defs.length;
+}
+
+/** Average per-100g macros across chosen ingredients — a comparison figure between recipes, not a true per-serving total. */
+function averageMacros(defs: IngredientDef[]): Macros {
+  const n = Math.max(1, defs.length);
+  return {
+    calories: defs.reduce((sum, d) => sum + d.macros.calories, 0) / n,
+    proteinG: defs.reduce((sum, d) => sum + d.macros.proteinG, 0) / n,
+    carbsG: defs.reduce((sum, d) => sum + d.macros.carbsG, 0) / n,
+    fatG: defs.reduce((sum, d) => sum + d.macros.fatG, 0) / n,
+    sodiumMg: defs.reduce((sum, d) => sum + d.macros.sodiumMg, 0) / n,
+  };
 }
 
 function urgency(daysUntilExpiry: number): number {
@@ -163,6 +175,7 @@ function buildRecipeForTechnique(
     chosen.reduce((sum, c) => sum + urgency(c.daysUntilExpiry), 0) / Math.max(1, chosen.length);
   const avgHealth = defs.reduce((sum, d) => sum + d.healthScore, 0) / Math.max(1, defs.length);
   const healthScore = Math.max(0, Math.min(1, avgHealth * technique.healthModifier));
+  const macros = averageMacros(defs);
 
   const mainName = ctx.protein ?? defs[0]?.name ?? 'Pantry';
   const title = `${technique.name}: ${mainName}${ctx.vegetables[0] ? ` with ${ctx.vegetables[0]}` : ''}`;
@@ -178,6 +191,7 @@ function buildRecipeForTechnique(
     balanceScore,
     wasteScore,
     healthScore,
+    macros,
   };
 }
 

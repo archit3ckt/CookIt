@@ -10,6 +10,15 @@ export type IngredientRole =
   | 'sweetener'
   | 'liquid';
 
+/** Macronutrients per 100g of the ingredient as typically eaten (cooked meat/veg, dried spices as sold, etc). */
+export interface Macros {
+  calories: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+  sodiumMg: number;
+}
+
 export interface IngredientDef {
   id: string;
   name: string;
@@ -20,6 +29,8 @@ export interface IngredientDef {
   defaultShelfLifeDays: number;
   /** 0-1 simplified nutrition heuristic (whole/nutrient-dense vs. processed/empty-calorie). Not medical advice. */
   healthScore: number;
+  /** Reference nutrition data, per 100g. Not a substitute for verified nutrition facts. */
+  macros: Macros;
 }
 
 export type Unit = 'g' | 'kg' | 'ml' | 'l' | 'piece' | 'unknown';
@@ -90,6 +101,8 @@ export interface GeneratedRecipe {
   wasteScore: number;
   /** 0-1 simplified nutrition heuristic for the whole dish (ingredient healthScores x technique modifier). */
   healthScore: number;
+  /** Average per-100g macros across the chosen ingredients — a relative comparison figure, not a true per-serving total. */
+  macros: Macros;
 }
 
-export type RecipeSort = 'waste' | 'time' | 'ease' | 'health';
+export type RecipeSort = 'waste' | 'time' | 'ease' | 'health' | 'protein';

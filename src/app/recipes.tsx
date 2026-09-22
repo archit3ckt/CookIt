@@ -12,6 +12,7 @@ const SORTS: { key: RecipeSort; label: string }[] = [
   { key: 'time', label: 'Fastest' },
   { key: 'ease', label: 'Easiest' },
   { key: 'health', label: 'Healthiest' },
+  { key: 'protein', label: 'High protein' },
 ];
 
 const HEALTH_FILTERS: { key: string; label: string; minHealth: number | undefined }[] = [

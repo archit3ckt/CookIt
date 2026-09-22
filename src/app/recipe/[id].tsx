@@ -23,6 +23,16 @@ export default function RecipeDetailScreen() {
         {recipe.estimatedMinutes} min · {'★'.repeat(recipe.difficulty)} difficulty · {healthLabel(recipe.healthScore)}
       </Text>
 
+      <Text style={styles.sectionHeader}>Macros (avg per 100g across ingredients)</Text>
+      <Text style={styles.macros}>
+        {Math.round(recipe.macros.calories)} kcal · {recipe.macros.proteinG.toFixed(1)}g protein ·{' '}
+        {recipe.macros.carbsG.toFixed(1)}g carbs · {recipe.macros.fatG.toFixed(1)}g fat ·{' '}
+        {Math.round(recipe.macros.sodiumMg)}mg sodium
+      </Text>
+      <Text style={styles.macrosNote}>
+        Reference figure for comparing recipes, not a per-serving nutrition total.
+      </Text>
+
       <Text style={styles.sectionHeader}>Ingredients</Text>
       {recipe.ingredientIds.map((id) => (
         <Text key={id} style={styles.ingredient}>
@@ -47,6 +57,8 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: '700' },
   meta: { color: '#666', marginBottom: 12 },
   sectionHeader: { fontSize: 15, fontWeight: '700', marginTop: 16, marginBottom: 6 },
+  macros: { fontSize: 14, color: '#333' },
+  macrosNote: { fontSize: 12, color: '#999', marginTop: 2 },
   ingredient: { fontSize: 15, color: '#333' },
   step: { fontSize: 15, color: '#333', marginBottom: 8, lineHeight: 21 },
 });

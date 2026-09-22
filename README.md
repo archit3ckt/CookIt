@@ -11,19 +11,20 @@ minimize food waste by prioritizing ingredients close to expiry.
    parsed into line items).
 2. **Rules engine** (`src/lib/rulesEngine`) — a hand-curated ~130-ingredient
    knowledge base (roles: protein/fat/acid/aromatic/starch/vegetable/dairy/
-   spice/sweetener/liquid, each with a 0-1 simplified health heuristic) plus
-   a flavor-pairing graph and 12 technique templates (sauté, roast, braise,
-   stir-fry, salad, soup, grill, bake, steam, poach, deep-fry, blend). The
-   generator fills each technique's required roles with the
-   best-pairing, soonest-expiring pantry items it has, then scores the
-   result by how connected the ingredients are (does everything tie in via
-   a shared aromatic/fat/acid?) — the same shape of heuristic a chef uses,
-   encoded as data instead of looked-up recipes. Ingredient ids are
-   type-checked against a master list (`ingredients.ts`), so a typo'd
-   pairing reference fails `tsc` rather than silently degrading the graph.
+   spice/sweetener/liquid, each with a 0-1 simplified health heuristic and
+   reference macros per 100g) plus a flavor-pairing graph and 12 technique
+   templates (sauté, roast, braise, stir-fry, salad, soup, grill, bake,
+   steam, poach, deep-fry, blend). The generator fills each technique's
+   required roles with the best-pairing, soonest-expiring pantry items it
+   has, then scores the result by how connected the ingredients are (does
+   everything tie in via a shared aromatic/fat/acid?) — the same shape of
+   heuristic a chef uses, encoded as data instead of looked-up recipes.
+   Ingredient ids are type-checked against a master list (`ingredients.ts`),
+   so a typo'd pairing reference fails `tsc` rather than silently degrading
+   the graph.
 3. **Ranking** — sort suggestions by waste reduction (uses what's expiring
-   soonest), time, ease, or health; filter by max cook time or minimum
-   health score.
+   soonest), time, ease, health, or protein content; filter by max cook time
+   or minimum health score.
 
 ## Stack
 
