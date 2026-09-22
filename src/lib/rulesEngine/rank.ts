@@ -42,6 +42,9 @@ export function filterAndSort(
     case 'health':
       sorted.sort((a, b) => b.healthScore - a.healthScore || b.balanceScore - a.balanceScore);
       break;
+    case 'protein':
+      sorted.sort((a, b) => b.macros.proteinG - a.macros.proteinG);
+      break;
   }
   return sorted;
 }
