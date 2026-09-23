@@ -1,12 +1,12 @@
 import { TechniqueTemplate } from '../types';
-import { oilAdjustmentNote } from './cookingNotes';
+import { cutStyle, oilAdjustmentNote } from './cookingNotes';
 
 export const TECHNIQUES: TechniqueTemplate[] = [
   {
     id: 'saute',
     kind: 'flat',
     name: 'Sauté & pan sauce',
-    requiredRoles: ['protein', 'fat', 'aromatic'],
+    requiredRoles: ['protein', { role: 'fat', action: 'heatable' }, 'aromatic'],
     optionalRoles: ['acid', 'spice'],
     baseMinutes: 20,
     minutesPerExtraIngredient: 2,
@@ -16,7 +16,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
       `Season ${ctx.protein ?? 'your protein'} and pat dry.`,
       `Heat ${ctx.fat ?? 'oil'} in a pan over medium-high heat${oilAdjustmentNote(ctx.proteinFatG)}.`,
       `Sear the ${ctx.protein ?? 'protein'} until browned, then set aside — leave it uncovered, a lid traps steam and stops browning.`,
-      `In the same pan, sauté ${ctx.aromatics.join(', ') || 'aromatics'} until fragrant.`,
+      `In the same pan, sauté ${cutStyle('saute', 'aromatic')}${ctx.aromatics.join(', ') || 'aromatics'} until fragrant.`,
       ctx.acid ? `Deglaze with ${ctx.acid} to build a pan sauce.` : 'Add a splash of water or stock to lift the fond.',
       `Return the ${ctx.protein ?? 'protein'} to the pan, toss with the sauce, and finish with ${ctx.spices.join(', ') || 'seasoning'}.`,
     ],
@@ -33,7 +33,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     healthModifier: 1.0,
     steps: (ctx) => [
       'Preheat oven to 425°F (220°C).',
-      `Toss ${ctx.protein ?? 'protein'} and ${ctx.vegetables.join(', ') || 'vegetables'} with ${ctx.fat ?? 'oil'}${oilAdjustmentNote(ctx.proteinFatG)} and ${ctx.spices.join(', ') || 'seasoning'}.`,
+      `Toss ${ctx.protein ?? 'protein'} and ${cutStyle('roast', 'vegetable')}${ctx.vegetables.join(', ') || 'vegetables'} with ${ctx.fat ?? 'oil'}${oilAdjustmentNote(ctx.proteinFatG)} and ${ctx.spices.join(', ') || 'seasoning'}.`,
       'Spread in a single layer on a sheet pan — crowding steams instead of roasts.',
       'Roast uncovered until the protein is cooked through and vegetables are caramelized, 25-35 min.',
     ],
@@ -50,7 +50,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     healthModifier: 0.95,
     steps: (ctx) => [
       `Add a little oil to the pot${oilAdjustmentNote(ctx.proteinFatG)}, then sear ${ctx.protein ?? 'protein'} on all sides and remove.`,
-      `Sauté ${ctx.aromatics.join(', ') || 'aromatics'} in the same pot.`,
+      `Sauté ${cutStyle('braise', 'aromatic')}${ctx.aromatics.join(', ') || 'aromatics'} in the same pot.`,
       `Return protein, add enough ${ctx.liquid ?? 'liquid'} to come halfway up, plus ${ctx.acid ?? 'an acid'} for brightness.`,
       'Cover with a lid and simmer low until fork-tender — the lid traps moisture so the liquid doesn\'t reduce away before the meat is done.',
       'If the sauce is thin once it\'s tender, uncover for the last 10-15 min to reduce and concentrate it.',
@@ -68,9 +68,9 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     healthModifier: 0.95,
     steps: (ctx) => [
       'Have all ingredients prepped before you start — this moves fast.',
-      `Sear ${ctx.protein ?? 'protein'} in a very hot wok/pan with a thin film of oil${oilAdjustmentNote(ctx.proteinFatG)}, then remove.`,
-      `Stir-fry ${ctx.aromatics.join(', ') || 'aromatics'} for 30 seconds.`,
-      `Add ${ctx.vegetables.join(', ') || 'vegetables'} and stir-fry uncovered until crisp-tender — covering steams the vegetables instead of keeping them crisp.`,
+      `Sear ${cutStyle('stir-fry', 'protein')}${ctx.protein ?? 'protein'} in a very hot wok/pan with a thin film of oil${oilAdjustmentNote(ctx.proteinFatG)}, then remove.`,
+      `Stir-fry ${cutStyle('stir-fry', 'aromatic')}${ctx.aromatics.join(', ') || 'aromatics'} for 30 seconds.`,
+      `Add ${cutStyle('stir-fry', 'vegetable')}${ctx.vegetables.join(', ') || 'vegetables'} and stir-fry uncovered until crisp-tender — covering steams the vegetables instead of keeping them crisp.`,
       `Return protein, toss with ${ctx.spices.join(', ') || 'sauce'}, serve over ${ctx.starch ?? 'rice'}.`,
     ],
   },
@@ -78,15 +78,15 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     id: 'raw-salad',
     kind: 'flat',
     name: 'Composed salad',
-    requiredRoles: ['vegetable', 'fat', 'acid'],
-    optionalRoles: ['protein', 'dairy'],
+    requiredRoles: ['vegetable', { role: 'fat', action: 'whiskable' }, { role: 'acid', action: 'whiskable' }],
+    optionalRoles: [{ role: 'protein', action: 'ready-to-eat' }, 'dairy'],
     baseMinutes: 10,
     minutesPerExtraIngredient: 1,
     difficulty: 1,
     healthModifier: 1.1,
     steps: (ctx) => [
       `Whisk ${ctx.fat ?? 'oil'} and ${ctx.acid ?? 'acid'} into a vinaigrette.`,
-      `Combine ${ctx.vegetables.join(', ') || 'vegetables'}${ctx.protein ? ` with ${ctx.protein}` : ''}.`,
+      `Combine ${cutStyle('raw-salad', 'vegetable')}${ctx.vegetables.join(', ') || 'vegetables'}${ctx.protein ? ` with ${ctx.protein}` : ''}.`,
       'Dress just before serving and season to taste.',
     ],
   },
@@ -101,8 +101,8 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     difficulty: 1,
     healthModifier: 1.0,
     steps: (ctx) => [
-      `Sauté ${ctx.aromatics.join(', ') || 'aromatics'} until soft.`,
-      `Add ${ctx.vegetables.join(', ') || 'vegetables'}${ctx.protein ? ` and ${ctx.protein}` : ''}, then cover with ${ctx.liquid ?? 'liquid'}.`,
+      `Sauté ${cutStyle('simmer-soup', 'aromatic')}${ctx.aromatics.join(', ') || 'aromatics'} until soft.`,
+      `Add ${cutStyle('simmer-soup', 'vegetable')}${ctx.vegetables.join(', ') || 'vegetables'}${ctx.protein ? ` and ${ctx.protein}` : ''}, then cover with ${ctx.liquid ?? 'liquid'}.`,
       'Partially cover (lid ajar) and simmer until everything is tender, 20-25 min — fully covered can boil over, fully uncovered reduces the liquid faster than you probably want.',
       'Adjust seasoning and serve.',
     ],
@@ -111,7 +111,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     id: 'grill',
     kind: 'flat',
     name: 'Grill/sear',
-    requiredRoles: ['protein', 'fat'],
+    requiredRoles: ['protein', { role: 'fat', action: 'whiskable' }],
     optionalRoles: ['acid', 'spice', 'vegetable'],
     baseMinutes: 20,
     minutesPerExtraIngredient: 2,
@@ -135,7 +135,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     healthModifier: 0.9,
     steps: (ctx) => [
       'Preheat oven to 375°F (190°C).',
-      `Layer ${ctx.starch ?? 'starch'}${ctx.protein ? ` and ${ctx.protein}` : ''} with ${ctx.vegetables.join(', ') || 'vegetables'} in a baking dish.`,
+      `Layer ${ctx.starch ?? 'starch'}${ctx.protein ? ` and ${ctx.protein}` : ''} with ${cutStyle('bake', 'vegetable')}${ctx.vegetables.join(', ') || 'vegetables'} in a baking dish.`,
       `Top with ${ctx.dairy ?? 'cheese'} and ${ctx.spices.join(', ') || 'seasoning'}.`,
       'Cover with foil and bake for the first 20 min so the inside cooks through without the top burning, then uncover for the last 10 min to brown and bubble.',
     ],
@@ -152,7 +152,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     healthModifier: 1.15,
     steps: (ctx) => [
       `Bring water to a boil in a steamer pot.`,
-      `Steam ${ctx.vegetables.join(', ') || 'vegetables'}${ctx.protein ? ` and ${ctx.protein}` : ''} under a tight-fitting lid until just tender — the whole technique depends on trapped steam, so don't lift the lid more than once or twice to check.`,
+      `Steam ${cutStyle('steam', 'vegetable')}${ctx.vegetables.join(', ') || 'vegetables'}${ctx.protein ? ` and ${ctx.protein}` : ''} under a tight-fitting lid until just tender — the whole technique depends on trapped steam, so don't lift the lid more than once or twice to check.`,
       `Finish with ${ctx.acid ?? 'a squeeze of citrus'} and ${ctx.spices.join(', ') || 'seasoning'}.`,
     ],
   },
@@ -167,7 +167,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     difficulty: 2,
     healthModifier: 1.05,
     steps: (ctx) => [
-      `Bring ${ctx.liquid ?? 'a pot of liquid'} to a gentle simmer with ${ctx.aromatics.join(', ') || 'aromatics'}${ctx.acid ? ` and ${ctx.acid}` : ''}.`,
+      `Bring ${ctx.liquid ?? 'a pot of liquid'} to a gentle simmer with ${cutStyle('poach', 'aromatic')}${ctx.aromatics.join(', ') || 'aromatics'}${ctx.acid ? ` and ${ctx.acid}` : ''}.`,
       `Add ${ctx.protein ?? 'protein'} and poach gently, uncovered, until just cooked through — leaving it uncovered lets you watch for the barely-trembling surface poaching needs; a lid can push it to a boil unnoticed.`,
       'Remove with a slotted spoon and rest briefly before serving.',
     ],
@@ -176,7 +176,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     id: 'deep-fry',
     kind: 'flat',
     name: 'Deep-fried',
-    requiredRoles: ['protein', 'fat', 'starch'],
+    requiredRoles: ['protein', { role: 'fat', action: 'heatable' }, 'starch'],
     optionalRoles: ['spice'],
     baseMinutes: 25,
     minutesPerExtraIngredient: 2,
@@ -193,7 +193,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     kind: 'flat',
     name: 'Blended (soup/smoothie)',
     requiredRoles: ['vegetable', 'liquid'],
-    optionalRoles: ['dairy', 'protein', 'spice'],
+    optionalRoles: ['dairy', { role: 'protein', action: 'ready-to-eat' }, 'spice'],
     baseMinutes: 10,
     minutesPerExtraIngredient: 1,
     difficulty: 1,
@@ -208,7 +208,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     id: 'cake',
     kind: 'flat',
     name: 'Butter cake (creaming method)',
-    requiredRoles: ['flour', 'sweetener', 'fat', 'egg', 'leavening'],
+    requiredRoles: ['flour', 'sweetener', { role: 'fat', action: 'creamable' }, 'egg', 'leavening'],
     optionalRoles: ['dairy', 'spice'],
     baseMinutes: 60,
     minutesPerExtraIngredient: 2,
@@ -231,7 +231,7 @@ export const TECHNIQUES: TechniqueTemplate[] = [
     kind: 'flat',
     name: 'Meringue',
     requiredRoles: ['egg-white', 'sweetener'],
-    optionalRoles: ['acid', 'spice'],
+    optionalRoles: [{ role: 'acid', action: 'whiskable' }, 'spice'],
     baseMinutes: 100,
     minutesPerExtraIngredient: 2,
     difficulty: 2,
@@ -283,14 +283,14 @@ export const TECHNIQUES: TechniqueTemplate[] = [
       {
         id: 'shell',
         label: 'Shell',
-        requiredRoles: ['dough-grain'],
+        requiredRoles: [{ role: 'starch', action: 'kneadable' }],
         optionalRoles: [],
       },
       {
         id: 'filling',
         label: 'Filling',
         requiredRoles: ['protein', 'aromatic'],
-        optionalRoles: ['fat', 'spice'],
+        optionalRoles: [{ role: 'fat', action: 'heatable' }, 'spice'],
       },
       {
         id: 'broth',
@@ -304,9 +304,9 @@ export const TECHNIQUES: TechniqueTemplate[] = [
       const filling = ctx.filling;
       const broth = ctx.broth;
       return [
-        `Soak ${shell.doughGrain ?? 'bulgur'} in warm water until softened, then squeeze out excess water and knead into a smooth, pliable dough.`,
-        `Cook ${filling.aromatics.join(', ') || 'aromatics'} with ${filling.protein ?? 'the filling protein'}${filling.fat ? ` and ${filling.fat}` : ''} until browned, seasoning with ${filling.spices.join(', ') || 'spices'}.`,
-        `Flatten a portion of the ${shell.doughGrain ?? 'bulgur'} dough in your palm, spoon in filling, and fold the edges up and seal into a ball — patch any cracks or the filling will leak out in the broth.`,
+        `Soak ${shell.starch ?? 'bulgur'} in warm water until softened, then squeeze out excess water and knead into a smooth, pliable dough.`,
+        `Cook ${cutStyle('kubbeh', 'aromatic')}${filling.aromatics.join(', ') || 'aromatics'} with ${filling.protein ?? 'the filling protein'}${filling.fat ? ` and ${filling.fat}` : ''} until browned, seasoning with ${filling.spices.join(', ') || 'spices'}.`,
+        `Flatten a portion of the ${shell.starch ?? 'bulgur'} dough in your palm, spoon in filling, and fold the edges up and seal into a ball — patch any cracks or the filling will leak out in the broth.`,
         `Bring ${broth.liquid ?? 'broth'} to a simmer with ${broth.aromatics.join(', ') || 'aromatics'}${broth.acid ? ` and ${broth.acid}` : ''}.`,
         'Gently lower the dumplings into the simmering broth, uncovered so you can watch them, and cook until the shells are set and cooked through, 20-30 min.',
       ];
@@ -331,19 +331,19 @@ export const TECHNIQUES: TechniqueTemplate[] = [
         id: 'protein',
         label: 'Protein',
         requiredRoles: ['protein'],
-        optionalRoles: ['fat', 'spice', 'acid'],
+        optionalRoles: [{ role: 'fat', action: 'whiskable' }, 'spice', 'acid'],
       },
       {
         id: 'wrap',
         label: 'Wrap',
-        requiredRoles: ['flatbread'],
+        requiredRoles: [{ role: 'starch', action: 'wrappable' }],
         optionalRoles: [],
       },
       {
         id: 'toppings',
         label: 'Toppings',
         requiredRoles: ['vegetable'],
-        optionalRoles: ['fat', 'dairy', 'acid', 'spice'],
+        optionalRoles: [{ role: 'fat', action: 'whiskable' }, 'dairy', 'acid', 'spice'],
       },
     ],
     assemble: (ctx) => {
@@ -353,8 +353,8 @@ export const TECHNIQUES: TechniqueTemplate[] = [
       return [
         `Marinate ${protein.protein ?? 'the protein'} in ${protein.fat ?? 'oil'}${protein.acid ? `, ${protein.acid},` : ''} and ${protein.spices.join(', ') || 'spices'} for at least 20 min.`,
         `Sear over high heat in a hot pan${oilAdjustmentNote(protein.proteinFatG)}, uncovered, until charred at the edges and cooked through, then slice thin.`,
-        `Warm ${wrap.flatbread ?? 'the wrap'} directly in a dry pan or over a flame until soft and pliable.`,
-        `Spread ${toppings.fat ?? toppings.dairy ?? 'sauce'} inside the wrap, then layer in the sliced protein and ${toppings.vegetables.join(', ') || 'vegetables'}${toppings.acid ? `, finished with ${toppings.acid}` : ''}.`,
+        `Warm ${wrap.starch ?? 'the wrap'} directly in a dry pan or over a flame until soft and pliable.`,
+        `Spread ${toppings.fat ?? toppings.dairy ?? 'sauce'} inside the wrap, then layer in the sliced protein and ${cutStyle('shawarma', 'vegetable')}${toppings.vegetables.join(', ') || 'vegetables'}${toppings.acid ? `, finished with ${toppings.acid}` : ''}.`,
         'Roll tightly and serve right away, before the wrap softens too much to hold its shape.',
       ];
     },

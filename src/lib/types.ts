@@ -15,11 +15,35 @@ export type IngredientRole =
   | 'egg'
   /** Separated egg white/yolk — distinct from 'egg' since whole eggs aren't a substitute in a meringue or custard. */
   | 'egg-white'
-  | 'egg-yolk'
-  /** A ready-to-warm-and-roll flatbread — distinct from the generic 'starch' role so a wrap-style dish can't end up trying to roll a potato or a bowl of rice. */
-  | 'flatbread'
-  /** A cracked grain that becomes a kneadable dough when soaked — distinct from 'starch' so a shell/dumpling dish can't end up trying to knead rice or pasta into a shell. */
-  | 'dough-grain';
+  | 'egg-yolk';
+
+/**
+ * A physical thing an ingredient can be made to do, independent of its
+ * culinary `role`. Orthogonal on purpose: a technique slot narrows by role +
+ * action together (e.g. 'starch' + 'wrappable') instead of every new
+ * role/action combination needing its own bespoke role name — a "whiskable
+ * fat" or "wrappable vegetable" reuses these same actions rather than
+ * minting 'whiskable-fat' / 'wrappable-vegetable'. Most ingredients perform
+ * none of these and have an empty actions list.
+ */
+export type IngredientAction =
+  | 'whiskable' // can be poured/whisked raw into a dressing, or whipped into a foam
+  | 'wrappable' // can be warmed and rolled/folded around a filling
+  | 'kneadable' // becomes a dough when hydrated
+  | 'ready-to-eat' // safe to eat as-is, no cooking step needed first
+  | 'heatable' // can serve as the direct heating medium in a pan or pot (sauté, deep-fry)
+  | 'creamable'; // a solid fat that can be beaten with sugar to trap air (baking's "creaming" step)
+
+/**
+ * A technique slot's requirement: a role on its own, or a role narrowed to
+ * ingredients that can also perform a given action. Plain strings cover the
+ * common case so most technique definitions don't need to change shape.
+ */
+export interface RoleRequirement {
+  role: IngredientRole;
+  action?: IngredientAction;
+}
+export type RoleSlot = IngredientRole | RoleRequirement;
 
 /** Macronutrients per 100g of the ingredient as typically eaten (cooked meat/veg, dried spices as sold, etc). */
 export interface Macros {
@@ -46,6 +70,8 @@ export interface IngredientDef {
   unit: Unit;
   /** Typical amount used in one serving of a dish, in `unit`. */
   servingQty: number;
+  /** Physical actions this ingredient can perform — see IngredientAction. Empty for most ingredients. */
+  actions: IngredientAction[];
 }
 
 export type Unit = 'g' | 'kg' | 'ml' | 'l' | 'piece' | 'unknown';
@@ -89,8 +115,8 @@ export type Technique =
 export interface TechniqueComponent {
   id: string;
   label: string;
-  requiredRoles: IngredientRole[];
-  optionalRoles: IngredientRole[];
+  requiredRoles: RoleSlot[];
+  optionalRoles: RoleSlot[];
 }
 
 interface TechniqueTemplateBase {
@@ -107,9 +133,9 @@ interface TechniqueTemplateBase {
 export interface FlatTechniqueTemplate extends TechniqueTemplateBase {
   kind: 'flat';
   /** Roles the technique needs filled to produce a balanced dish. */
-  requiredRoles: IngredientRole[];
+  requiredRoles: RoleSlot[];
   /** Roles that improve the dish but aren't mandatory. */
-  optionalRoles: IngredientRole[];
+  optionalRoles: RoleSlot[];
   steps: (ctx: TechniqueContext) => string[];
 }
 
@@ -147,8 +173,6 @@ export interface TechniqueContext {
   egg?: string;
   eggWhite?: string;
   eggYolk?: string;
-  flatbread?: string;
-  doughGrain?: string;
 }
 
 /** One chosen ingredient's typical amount for a single serving of the dish. */

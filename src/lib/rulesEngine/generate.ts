@@ -5,6 +5,7 @@ import {
   Macros,
   PantryItem,
   RecipeIngredientQty,
+  RoleSlot,
   TechniqueContext,
   TechniqueTemplate,
 } from '../types';
@@ -16,6 +17,17 @@ import { TECHNIQUES } from './techniques';
 
 const MULTI_ROLES: IngredientRole[] = ['aromatic', 'vegetable', 'spice'];
 const MULTI_ROLE_LIMIT = 3;
+
+/** The bare role a slot needs, regardless of whether it also narrows by action. */
+function slotRole(slot: RoleSlot): IngredientRole {
+  return typeof slot === 'string' ? slot : slot.role;
+}
+
+/** Whether an ingredient satisfies a slot's role, and its action if the slot narrows by one. */
+function slotMatches(def: IngredientDef, slot: RoleSlot): boolean {
+  if (typeof slot === 'string') return def.roles.includes(slot);
+  return def.roles.includes(slot.role) && (!slot.action || def.actions.includes(slot.action));
+}
 
 interface PantryIngredient {
   item: PantryItem;
@@ -94,14 +106,14 @@ function daysUntil(dateIso: string | null): number {
   return Math.round(ms / (1000 * 60 * 60 * 24));
 }
 
-/** Greedily pick the pantry ingredient for a role that best pairs with what's already chosen. */
+/** Greedily pick the pantry ingredient for a slot that best pairs with what's already chosen. */
 function pickBest(
   candidates: PantryIngredient[],
-  role: IngredientRole,
+  slot: RoleSlot,
   alreadyChosen: IngredientDef[],
   excludeIds: Set<string>
 ): PantryIngredient | null {
-  const pool = candidates.filter((c) => c.def.roles.includes(role) && !excludeIds.has(c.def.id));
+  const pool = candidates.filter((c) => slotMatches(c.def, slot) && !excludeIds.has(c.def.id));
   if (pool.length === 0) return null;
   let best = pool[0];
   let bestScore = -Infinity;
@@ -119,12 +131,12 @@ function pickBest(
 
 function pickMultiple(
   candidates: PantryIngredient[],
-  role: IngredientRole,
+  slot: RoleSlot,
   alreadyChosen: IngredientDef[],
   excludeIds: Set<string>,
   limit: number
 ): PantryIngredient[] {
-  const pool = candidates.filter((c) => c.def.roles.includes(role) && !excludeIds.has(c.def.id));
+  const pool = candidates.filter((c) => slotMatches(c.def, slot) && !excludeIds.has(c.def.id));
   const scored = pool
     .map((c) => ({
       c,
@@ -161,12 +173,13 @@ function makeRoleFiller(
     });
   }
 
-  return function fillRole(role: IngredientRole): boolean {
+  return function fillRole(slot: RoleSlot): boolean {
+    const role = slotRole(slot);
     const isMulti = MULTI_ROLES.includes(role);
     if (isMulti) {
       const picks = pickMultiple(
         pantry,
-        role,
+        slot,
         state.chosen.map((c) => c.def),
         state.excludeIds,
         MULTI_ROLE_LIMIT
@@ -177,7 +190,7 @@ function makeRoleFiller(
     }
     const pick = pickBest(
       pantry,
-      role,
+      slot,
       state.chosen.map((c) => c.def),
       state.excludeIds
     );
@@ -188,45 +201,46 @@ function makeRoleFiller(
 }
 
 interface RoleFillTarget {
-  roles: IngredientRole[];
-  fillRole: (role: IngredientRole) => boolean;
+  roles: RoleSlot[];
+  fillRole: (slot: RoleSlot) => boolean;
 }
 
 /**
- * Fills every (target, role) pair most-constrained-first — fewest eligible
+ * Fills every (target, slot) pair most-constrained-first — fewest eligible
  * pantry candidates remaining, recomputed after each pick — across ALL
  * targets at once, not target-by-target. A flat technique passes one
  * target; a composite technique passes one per component, sharing state so
  * the ordering is global. That matters because an ingredient can satisfy
- * more than one role (eggs are both 'fat' and 'egg'), and — for composites
- * specifically — the same physical ingredient could equally satisfy a role
- * in two different components (e.g. both a shell and a filling wanting
- * 'starch'). Filling roles in declared order, or component-by-component,
- * can let a generic/early role's greedy pick consume the only candidate a
- * later, narrower role needed even though a valid assignment exists.
- * Processing the globally scarcest role first avoids that. Returns false
- * (required) or does nothing (optional) when a role can't be filled.
+ * more than one role (eggs are both 'protein' and 'egg'), and — for
+ * composites specifically — the same physical ingredient could equally
+ * satisfy a role in two different components (e.g. both a shell and a
+ * filling wanting 'starch'). Filling roles in declared order, or
+ * component-by-component, can let a generic/early slot's greedy pick
+ * consume the only candidate a later, narrower slot needed even though a
+ * valid assignment exists. Processing the globally scarcest slot first
+ * avoids that. Returns false (required) or does nothing (optional) when a
+ * slot can't be filled.
  */
 function fillRolesMRV(pantry: PantryIngredient[], state: RoleFillState, targets: RoleFillTarget[], required: boolean): boolean {
-  function eligibleCount(role: IngredientRole): number {
-    return pantry.filter((c) => c.def.roles.includes(role) && !state.excludeIds.has(c.def.id)).length;
+  function eligibleCount(slot: RoleSlot): number {
+    return pantry.filter((c) => slotMatches(c.def, slot) && !state.excludeIds.has(c.def.id)).length;
   }
 
-  const remaining: { targetIdx: number; role: IngredientRole }[] = [];
-  targets.forEach((t, i) => t.roles.forEach((role) => remaining.push({ targetIdx: i, role })));
+  const remaining: { targetIdx: number; slot: RoleSlot }[] = [];
+  targets.forEach((t, i) => t.roles.forEach((slot) => remaining.push({ targetIdx: i, slot })));
 
   while (remaining.length > 0) {
     let bestIdx = 0;
     let bestCount = Infinity;
     for (let i = 0; i < remaining.length; i++) {
-      const count = eligibleCount(remaining[i].role);
+      const count = eligibleCount(remaining[i].slot);
       if (count < bestCount) {
         bestCount = count;
         bestIdx = i;
       }
     }
-    const { targetIdx, role } = remaining.splice(bestIdx, 1)[0];
-    const filled = targets[targetIdx].fillRole(role);
+    const { targetIdx, slot } = remaining.splice(bestIdx, 1)[0];
+    const filled = targets[targetIdx].fillRole(slot);
     if (!filled && required) return false;
   }
   return true;
@@ -251,8 +265,6 @@ function buildContext(byRoleAssignment: Partial<Record<IngredientRole, PantryIng
     egg: byRole('egg')[0]?.def.name,
     eggWhite: byRole('egg-white')[0]?.def.name,
     eggYolk: byRole('egg-yolk')[0]?.def.name,
-    flatbread: byRole('flatbread')[0]?.def.name,
-    doughGrain: byRole('dough-grain')[0]?.def.name,
   };
 }
 
